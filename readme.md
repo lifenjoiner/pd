@@ -36,11 +36,11 @@ cn
 # *.wikipedia.org
 wikipedia.org
 
-## ip range match: from left to right. `.` for ipv4, `:` for ipv6 as separator. Requires separator, `*` is optional.
-# 10.0.0.0–10.255.255.255
+## ip range match: from left to right. `.` for ipv4, `:` for ipv6 as separator. Separator and `*` are required.
+# 10.0.0.0-10.255.255.255
 10.*
-# 192.168.0.0–192.168.255.255.
-192.168.
+# 192.168.0.0-192.168.255.255.
+192.168.*
 ```
 
 

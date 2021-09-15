@@ -44,10 +44,6 @@ func (sh StaticHosts) Upsert(in string, strategy Strategy) {
 		if dm[0] == '#' {
 			continue
 		}
-		n := len(dm)
-		if dm[n-1] == '*' {
-			dm = dm[0:n-1]
-		}
 		sh[dm] = strategy
 	}
 }
@@ -67,8 +63,8 @@ func (sh StaticHosts) GetHostStrategy(host string) (Strategy) {
 	return StaticNil
 }
 
-// Get the strategy of an ip. Left to right, match prefix with the separator first.
-// IP syntax: a.b.c.d, 127.0.0.*, 192.168.*, or 10.; * would be removed.
+// Get the strategy of an ip. Left to right.
+// IP syntax: a.b.c.d, 127.0.0.*, 192.168.*, or 10.*; * is required as IPv6 would omit `0`s.
 func (sh StaticHosts) GetIPStrategy(ip string) (Strategy) {
 	// "::ffff:192.0.2.1"
 	var sp byte = ':'
@@ -79,7 +75,7 @@ func (sh StaticHosts) GetIPStrategy(ip string) (Strategy) {
 		if ip[i] != sp {
 			continue
 		}
-		dv := sh[ip[0:i+1]]
+		dv := sh[ip[0:i+1] +"*"]
 		if dv != StaticNil {
 			return dv
 		}
