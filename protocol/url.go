@@ -10,7 +10,7 @@ import (
 )
 
 // Get the omitted port of an URL.
-func GetPort(u *url.URL) (string) {
+func GetPort(u *url.URL) string {
 	port := u.Port()
 	if len(port) == 0 {
 		switch strings.ToLower(u.Scheme) {

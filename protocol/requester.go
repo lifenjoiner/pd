@@ -13,11 +13,11 @@ import (
 
 // The interface to send the proxied request to upstream servers.
 type Requester interface {
-	Command() (string)
-	Target() (string)
-	Host() (string)
-	Hostname() (string)
-	Port() (string)
-	GetRequest(io.Writer, *bufio.Reader) (error)
-	Request(*forwarder.Forwarder) (error)
+	Command() string
+	Target() string
+	Host() string
+	Hostname() string
+	Port() string
+	GetRequest(io.Writer, *bufio.Reader) error
+	Request(*forwarder.Forwarder) error
 }

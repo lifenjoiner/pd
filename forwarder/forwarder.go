@@ -15,11 +15,11 @@ import (
 
 // Forwarder is the relay for client to upstream and proxy to downstream.
 type Forwarder struct {
-	LeftAddr    net.Addr
-	LeftConn    *bufconn.Conn
-	RightAddr   net.Addr
-	RightConn   *bufconn.Conn // TCP/UDP
-	Timeout     time.Duration
+	LeftAddr  net.Addr
+	LeftConn  *bufconn.Conn
+	RightAddr net.Addr
+	RightConn *bufconn.Conn // TCP/UDP
+	Timeout   time.Duration
 }
 
 // The reading size, could > 4k, need big enough to get the whole Tls Handshake packets.
@@ -32,7 +32,7 @@ const (
 	TlsApplication  byte = 0x17
 )
 
-func (fw *Forwarder) Tunnel() (error) {
+func (fw *Forwarder) Tunnel() error {
 	var wg sync.WaitGroup
 	var LrErr, LwErr, RrErr, RwErr error
 
@@ -57,7 +57,7 @@ func (fw *Forwarder) Tunnel() (error) {
 				fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 				_, RwErr = fw.RightConn.Write(LeftBuf[0:n])
 			}
-			if LrErr != nil || LwErr != nil  || RrErr != nil || RwErr != nil {
+			if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
 				if isReset(LrErr) || isTimeout(LrErr) {
 					fw.RightConn.SetDeadline(time.Now())
 				}
@@ -105,7 +105,7 @@ func (fw *Forwarder) Tunnel() (error) {
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			_, LwErr = fw.LeftConn.Write(RightBuf[0:n])
 		}
-		if LrErr != nil || LwErr != nil  || RrErr != nil || RwErr != nil {
+		if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
 			fw.LeftConn.SetDeadline(time.Now())
 			//log.Printf("[forwarder] %v <-- %v: %v", fw.LeftAddr, fw.RightAddr, RrErr)
 			break

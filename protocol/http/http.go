@@ -22,14 +22,14 @@ func parseStartLine(line string) (r1, r2, r3 string, ok bool) {
 }
 
 func writeStartLine(w io.Writer, s1, s2, s3 string) (err error) {
-	_, err = io.WriteString(w, s1 +" "+ s2 +" "+ s3 +"\r\n")
+	_, err = io.WriteString(w, s1+" "+s2+" "+s3+"\r\n")
 	return
 }
 
 func writeHeaders(w io.Writer, header textproto.MIMEHeader) (err error) {
 	for key, values := range header {
 		for _, v := range values {
-			_, err = io.WriteString(w, key +": "+ v +"\r\n")
+			_, err = io.WriteString(w, key+": "+v+"\r\n")
 			if err != nil {
 				return
 			}

@@ -38,19 +38,19 @@ func (r *Request) Command() (m string) {
 	return
 }
 
-func (r *Request) Target() (string) {
-	return r.DestHost +":"+ r.DestPort
+func (r *Request) Target() string {
+	return r.DestHost + ":" + r.DestPort
 }
 
-func (r *Request) Host() (string) {
-	return r.DestHost +":"+ r.DestPort
+func (r *Request) Host() string {
+	return r.DestHost + ":" + r.DestPort
 }
 
-func (r *Request) Hostname() (string) {
+func (r *Request) Hostname() string {
 	return r.DestHost
 }
 
-func (r *Request) Port() (string) {
+func (r *Request) Port() string {
 	return r.DestPort
 }
 
@@ -63,7 +63,6 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-
 func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
 	fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
@@ -73,7 +72,6 @@ func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
 	}
 	return
 }
-
 
 func ParseRequest(rd *bufio.Reader) (req *Request, err error) {
 	var p socks.Packet
@@ -101,7 +99,7 @@ func ParseRequest(rd *bufio.Reader) (req *Request, err error) {
 	default:
 		return nil, errors.New("invalid SOCKS5 address type")
 	}
-	if len(p) < 4 + n + 2 {
+	if len(p) < 4+n+2 {
 		return nil, errors.New("illegal SOCKS5 packet")
 	}
 	switch req.AddrType {

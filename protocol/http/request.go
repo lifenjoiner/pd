@@ -19,36 +19,36 @@ import (
 )
 
 type Request struct {
-	Method      string
-	Url         string
-	Proto       string
-	Auth        string
-	PostData    []byte  // to retry to defend RST
-	TlsData     []byte  // to retry to defend RST, ClientHello
-	Responsed   bool
+	Method    string
+	Url       string
+	Proto     string
+	Auth      string
+	PostData  []byte // to retry to defend RST
+	TlsData   []byte // to retry to defend RST, ClientHello
+	Responsed bool
 
-	Header      textproto.MIMEHeader
-	URL         *url.URL
-	TryCount    byte
+	Header   textproto.MIMEHeader
+	URL      *url.URL
+	TryCount byte
 }
 
-func (r *Request) Command() (string) {
+func (r *Request) Command() string {
 	return r.Method
 }
 
-func (r *Request) Target() (string) {
+func (r *Request) Target() string {
 	return r.Url
 }
 
-func (r *Request) Host() (string) {
+func (r *Request) Host() string {
 	return r.URL.Host
 }
 
-func (r *Request) Hostname() (string) {
+func (r *Request) Hostname() string {
 	return r.URL.Hostname()
 }
 
-func (r *Request) Port() (string) {
+func (r *Request) Port() string {
 	return protocol.GetPort(r.URL)
 }
 
@@ -84,7 +84,6 @@ func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
 	}
 	return
 }
-
 
 func (r *Request) cacheTlsData(rd *bufio.Reader) (err error) {
 	r.TlsData, err = bufconn.ReceiveData(rd)

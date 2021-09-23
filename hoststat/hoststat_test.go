@@ -9,13 +9,13 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"time"
 	"testing"
+	"time"
 )
 
 func TestHostStats(t *testing.T) {
 	var hs *HostStats
-	file := os.TempDir() +"/stat.json"
+	file := os.TempDir() + "/stat.json"
 	h := "github.com:https"
 	//
 	os.Remove(file)
@@ -44,7 +44,7 @@ func TestHostStats(t *testing.T) {
 		}
 	}
 	Total := 0.0
-	for i := 1; i <= 2 * N; i++ {
+	for i := 1; i <= 2*N; i++ {
 		v := float64(rand.Intn(2))
 		hs.Update(h, v)
 		log.Printf("%v: %v -> %v", i, v, hs.Stats[h].Value)
@@ -52,9 +52,9 @@ func TestHostStats(t *testing.T) {
 			Total += v
 		}
 	}
-	delta := Total / float64(N) - hs.Stats[h].Value
+	delta := Total/float64(N) - hs.Stats[h].Value
 	log.Printf("Average - Value = %v", delta)
-	if math.Abs(delta) > 1 / float64(N) {
+	if math.Abs(delta) > 1/float64(N) {
 		t.Fail()
 	}
 	hs.Save(file)

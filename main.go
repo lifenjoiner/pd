@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	name = "pd"
-	version = "0.1.0"
+	name        = "pd"
+	version     = "0.1.0"
 	description = "A local proxy dispatcher."
 )
 
@@ -29,7 +29,7 @@ func ServeFromConfig(config *Config) {
 	dispatcher.GlobalStaticHosts = statichost.MapStaticFiles(config.Blocked, config.Direct)
 	dispatcher.GlobalHostStats = hoststat.MapStatsFile(config.StatFile)
 	dispatcher.StartProbeDirect(config.NetProbeUrl, svrConf.UpstreamTimeout)
-	go func(){
+	go func() {
 		dispatcher.GlobalProxyPool = proxypool.InitProxyPool(svrConf.Proxies, svrConf.ProxyProbeUrl, svrConf.UpstreamTimeout)
 	}()
 

@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-func IsDnsErr(err error) (bool) {
+func IsDnsErr(err error) bool {
 	if err == nil {
 		return false
 	}

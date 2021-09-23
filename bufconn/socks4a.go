@@ -19,7 +19,7 @@ func (c *Socks4aConn) bondData(m, h, p string) ([]byte, error) {
 	switch strings.ToUpper(m) {
 	case "CONNECT":
 	default:
-		return nil, errors.New("unsupported method: "+ m)
+		return nil, errors.New("unsupported method: " + m)
 	}
 
 	pp, err := socks.ToPacketPort(p)
@@ -28,7 +28,7 @@ func (c *Socks4aConn) bondData(m, h, p string) ([]byte, error) {
 	}
 	l := len(h)
 	if l > 256 {
-		return nil, errors.New("too long hostname: "+ h)
+		return nil, errors.New("too long hostname: " + h)
 	}
 	data := []byte{4, 1}
 	data = append(data, pp...)
@@ -60,11 +60,11 @@ func (c *Socks4aConn) Bond(m, h, p string, b []byte) (err error) {
 	return err
 }
 
-func (c *Socks4aConn) GetConn() (*Conn) {
+func (c *Socks4aConn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewSocks4aConn(c *Conn, u *url.URL) (*Socks4aConn) {
+func NewSocks4aConn(c *Conn, u *url.URL) *Socks4aConn {
 	return (*Socks4aConn)(c)
 }
 

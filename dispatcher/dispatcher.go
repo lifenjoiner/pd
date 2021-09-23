@@ -24,9 +24,9 @@ import (
 
 // The global parameters for dispatcher.
 var (
-	GlobalStaticHosts   statichost.StaticHosts
-	GlobalHostStats     *hoststat.HostStats
-	GlobalProxyPool     map[string]*proxypool.ProxyPool
+	GlobalStaticHosts statichost.StaticHosts
+	GlobalHostStats   *hoststat.HostStats
+	GlobalProxyPool   map[string]*proxypool.ProxyPool
 )
 
 // If we are offline, don't update the GlobalHostStats.
@@ -34,12 +34,12 @@ var globalDirectIsOK bool
 
 // What a dispatcher instance is composed with.
 type Dispatcher struct {
-	ServerType      string
-	Client          *bufconn.Conn
-	DestHost        string
-	DestPort        string
-	Timeout         time.Duration
-	ParallelDial    bool
+	ServerType   string
+	Client       *bufconn.Conn
+	DestHost     string
+	DestPort     string
+	Timeout      time.Duration
+	ParallelDial bool
 	//local
 	maxTry      int
 	tried       int
@@ -49,13 +49,13 @@ type Dispatcher struct {
 }
 
 // The Dispatcher constructor.
-func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) (*Dispatcher) {
+func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispatcher {
 	return &Dispatcher{
 		ServerType: s,
-		Client: c,
-		DestHost: h,
-		DestPort: p,
-		Timeout: d,
+		Client:     c,
+		DestHost:   h,
+		DestPort:   p,
+		Timeout:    d,
 	}
 }
 
@@ -78,7 +78,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 		d.maxProxyTry = 0
 	}
 
-	logPre := "["+ d.ServerType +"] "+ req.Command() +" "+ req.Target() +" <- "+ d.Client.RemoteAddr().String()
+	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Target() + " <- " + d.Client.RemoteAddr().String()
 	log.Printf("%v [type:%v]", logPre, strategy)
 
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
@@ -115,39 +115,39 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 }
 
 // Decide whether the host is aways go direct or proxied.
-func (d *Dispatcher) DispatchByStaticRules() (statichost.Strategy) {
+func (d *Dispatcher) DispatchByStaticRules() statichost.Strategy {
 	return GlobalStaticHosts.GetStrategy(d.DestHost)
 }
 
 // Solve the direct connect tries by HostStat.
 func (d *Dispatcher) DispatchByStats() {
-	h := d.DestHost +":"+ d.DestPort
+	h := d.DestHost + ":" + d.DestPort
 	stat := GlobalHostStats.Stats[h]
 	if stat == nil || stat.Value > 0.8 {
-		d.maxTry= 3
+		d.maxTry = 3
 	} else if stat.Value > 0.6 {
-		d.maxTry= 2
+		d.maxTry = 2
 	} else if stat.Value > 0.4 || stat.Count <= hoststat.EwmaSlide {
-		d.maxTry= 1
-	} else if stat.Value > 0.3 && time.Since(stat.Time) > 5 * time.Minute {
-		d.maxTry= 1
-	} else if stat.Value > 0.2 && time.Since(stat.Time) > 7 * time.Minute {
-		d.maxTry= 1
-	} else if stat.Value > 0.1 && time.Since(stat.Time) > 13 * time.Minute {
-		d.maxTry= 1
-	} else if time.Since(stat.Time) > 31 * time.Minute {
-		d.maxTry= 1
+		d.maxTry = 1
+	} else if stat.Value > 0.3 && time.Since(stat.Time) > 5*time.Minute {
+		d.maxTry = 1
+	} else if stat.Value > 0.2 && time.Since(stat.Time) > 7*time.Minute {
+		d.maxTry = 1
+	} else if stat.Value > 0.1 && time.Since(stat.Time) > 13*time.Minute {
+		d.maxTry = 1
+	} else if time.Since(stat.Time) > 31*time.Minute {
+		d.maxTry = 1
 	} else {
-		d.maxTry= 0
+		d.maxTry = 0
 	}
 }
 
 // The helper struct for DispatchIP.
 type goodConn struct {
 	sync.RWMutex
-	c net.Conn
+	c   net.Conn
 	err error
-	n int
+	n   int
 }
 
 // Get the quickest responsive IP for a direct connection.
@@ -236,9 +236,9 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy *proxypool.Pr
 }
 
 // Serve the client by direct connecting to the server.
-func (d *Dispatcher) ServeDirect(req protocol.Requester) (error) {
+func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 	client := d.Client
-	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried + 1, d.maxTry, req.Command(), req.Target())
+	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Target())
 	client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	c, err := d.DispatchIP()
 	if err == nil {
@@ -248,11 +248,11 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (error) {
 		}
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), c.RemoteAddr())
 		fw := &forwarder.Forwarder{
-			LeftAddr: client.RemoteAddr(),
-			LeftConn: client,
+			LeftAddr:  client.RemoteAddr(),
+			LeftConn:  client,
 			RightAddr: c.RemoteAddr(),
 			RightConn: c,
-			Timeout: d.Timeout,
+			Timeout:   d.Timeout,
 		}
 		err = req.Request(fw)
 	} else if IsDnsErr(err) {
@@ -272,9 +272,9 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (error) {
 }
 
 // Serve the client by proxy.
-func (d *Dispatcher) ServeProxied(req protocol.Requester) (error) {
+func (d *Dispatcher) ServeProxied(req protocol.Requester) error {
 	client := d.Client
-	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried + 1, d.maxProxyTry, req.Command(), req.Target())
+	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Target())
 	client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	if req.Command() == "CONNECT" && req.GetRequest(client, client.R) != nil {
 		log.Printf("[%v] %v %v <- %v <= TLS: no ClientHello, drop it.", d.ServerType, req.Command(), req.Target(), client.RemoteAddr())
@@ -287,11 +287,11 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (error) {
 		err = conn.Bond(req.Command(), req.Hostname(), req.Port(), nil)
 		if err == nil {
 			fw := &forwarder.Forwarder{
-				LeftAddr: client.RemoteAddr(),
-				LeftConn: client,
+				LeftAddr:  client.RemoteAddr(),
+				LeftConn:  client,
 				RightAddr: c.RemoteAddr(),
 				RightConn: c,
-				Timeout: d.Timeout,
+				Timeout:   d.Timeout,
 			}
 			err = req.Request(fw)
 		}
@@ -302,7 +302,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (error) {
 	return err
 }
 
-func NotInternetHost(h string) (bool) {
+func NotInternetHost(h string) bool {
 	if statichost.HostIsIP(h) {
 		IP := net.ParseIP(h)
 		return !IP.IsGlobalUnicast() || IP.IsPrivate()

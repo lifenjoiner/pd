@@ -22,23 +22,23 @@ const updateInterval time.Duration = 3 * time.Minute
 
 // Proxy stores the upstream proxy(socks/http, h3) settings.
 type Proxy struct {
-	Ewma    *ewma.EWMA
-	URL     *url.URL
-	Url     string
+	Ewma *ewma.EWMA
+	URL  *url.URL
+	Url  string
 }
 
-func (p *Proxy) Dup() (*Proxy) {
+func (p *Proxy) Dup() *Proxy {
 	e := *p.Ewma
 	u := *p.URL
 	s := p.Url
 	return &Proxy{&e, &u, s}
 }
 
-func (p *Proxy) Dial(d time.Duration) (error) {
+func (p *Proxy) Dial(d time.Duration) error {
 	return nil
 }
 
-func (p *Proxy) Check(target *url.URL, d time.Duration) (error) {
+func (p *Proxy) Check(target *url.URL, d time.Duration) error {
 	ck := &checker.TargetChecker{p.URL, d, nil, target}
 	return ck.Check()
 }
@@ -50,14 +50,14 @@ func NewProxy(s string) (*Proxy, error) {
 	}
 	return &Proxy{
 		Ewma: ewma.NewMovingAverage(ewmaSlide),
-		URL: u,
-		Url: s,
+		URL:  u,
+		Url:  s,
 	}, nil
 }
 
-func NewProxies(urls []string) ([]*Proxy) {
+func NewProxies(urls []string) []*Proxy {
 	var proxies []*Proxy
-	for i := 0; i < len(urls) ; i++ {
+	for i := 0; i < len(urls); i++ {
 		s := urls[i]
 		if len(s) == 0 {
 			continue
@@ -75,10 +75,10 @@ func NewProxies(urls []string) ([]*Proxy) {
 
 type ProxyPool struct {
 	sync.RWMutex
-	Proxies         []*Proxy
-	Checker         string
-	ProxyProbeUrl   *url.URL
-	Timeout         time.Duration
+	Proxies       []*Proxy
+	Checker       string
+	ProxyProbeUrl *url.URL
+	Timeout       time.Duration
 }
 
 // Update and sort the EWMA of proxies in the pool.
@@ -90,7 +90,7 @@ func (pp *ProxyPool) Update() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(N)
-	for i := 0; i < N ; i++ {
+	for i := 0; i < N; i++ {
 		proxy := p[i]
 		go func() {
 			defer wg.Done()
@@ -110,7 +110,7 @@ func (pp *ProxyPool) Update() {
 		return p[i].Ewma.Value() < p[j].Ewma.Value()
 	})
 	log.Printf("[ProxyPool] Sorted latencies:")
-	for i := 0; i < N ; i++ {
+	for i := 0; i < N; i++ {
 		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(p[i].Ewma.Value()), p[i].URL.Scheme, p[i].URL.Host)
 	}
 	pp.Unlock()

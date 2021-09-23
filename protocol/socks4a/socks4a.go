@@ -7,6 +7,6 @@ package socks4a
 
 // SOCKS address types.
 const (
-	CmdConnect  = 1
-	CmdBind     = 2
+	CmdConnect = 1
+	CmdBind    = 2
 )

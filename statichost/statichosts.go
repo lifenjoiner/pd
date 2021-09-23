@@ -13,7 +13,7 @@ import (
 
 // The strategies the hosts will be processed with.
 const (
-	StaticNil       = iota
+	StaticNil = iota
 	StaticDirect
 	StaticBlocked
 )
@@ -49,8 +49,8 @@ func (sh StaticHosts) Upsert(in string, strategy Strategy) {
 }
 
 // Get the strategy of an hostname. Right to left, match sufix after the separator first.
-func (sh StaticHosts) GetHostStrategy(host string) (Strategy) {
-	h := "."+ host
+func (sh StaticHosts) GetHostStrategy(host string) Strategy {
+	h := "." + host
 	for i := len(host); i >= 0; i-- {
 		if h[i] != '.' {
 			continue
@@ -65,7 +65,7 @@ func (sh StaticHosts) GetHostStrategy(host string) (Strategy) {
 
 // Get the strategy of an ip. Left to right.
 // IP syntax: a.b.c.d, 127.0.0.*, 192.168.*, or 10.*; * is required as IPv6 would omit `0`s.
-func (sh StaticHosts) GetIPStrategy(ip string) (Strategy) {
+func (sh StaticHosts) GetIPStrategy(ip string) Strategy {
 	// "::ffff:192.0.2.1"
 	var sp byte = ':'
 	if strings.LastIndexByte(ip, '.') > 0 {
@@ -75,7 +75,7 @@ func (sh StaticHosts) GetIPStrategy(ip string) (Strategy) {
 		if ip[i] != sp {
 			continue
 		}
-		dv := sh[ip[0:i+1] +"*"]
+		dv := sh[ip[0:i+1]+"*"]
 		if dv != StaticNil {
 			return dv
 		}
@@ -84,7 +84,7 @@ func (sh StaticHosts) GetIPStrategy(ip string) (Strategy) {
 }
 
 // Get the strategy for a host or ip.
-func (sh StaticHosts) GetStrategy(q string) (Strategy) {
+func (sh StaticHosts) GetStrategy(q string) Strategy {
 	if HostIsIP(q) {
 		return sh.GetIPStrategy(q)
 	} else {
@@ -92,18 +92,18 @@ func (sh StaticHosts) GetStrategy(q string) (Strategy) {
 	}
 }
 
-func HostIsIP(h string) (bool) {
+func HostIsIP(h string) bool {
 	n := len(h)
 	if n <= 0 {
 		return false
 	}
 	v := h[n-1]
-	return  '0' <= v && v <= '9' || strings.ContainsRune(h, ':')
+	return '0' <= v && v <= '9' || strings.ContainsRune(h, ':')
 }
 
 // Load all settings.
 // Priority: StaticDirect > StaticBlocked
-func MapStaticFiles(blocked, direct string) (StaticHosts) {
+func MapStaticFiles(blocked, direct string) StaticHosts {
 	sh := StaticHosts{}
 	sh.Load(blocked, StaticBlocked)
 	sh.Load(direct, StaticDirect)

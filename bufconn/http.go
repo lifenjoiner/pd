@@ -22,7 +22,7 @@ func (c *HttpConn) bondData(m, h, p string) ([]byte, error) {
 	}
 
 	hp := net.JoinHostPort(h, p)
-	data := []byte("CONNECT "+ hp +" HTTP/1.1\r\nHost: "+ hp +"\r\n\r\n")
+	data := []byte("CONNECT " + hp + " HTTP/1.1\r\nHost: " + hp + "\r\n\r\n")
 	return data, nil
 }
 
@@ -48,11 +48,11 @@ func (c *HttpConn) Bond(m, h, p string, b []byte) (err error) {
 	return err
 }
 
-func (c *HttpConn) GetConn() (*Conn) {
+func (c *HttpConn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewHttpConn(c *Conn) (*HttpConn) {
+func NewHttpConn(c *Conn) *HttpConn {
 	return (*HttpConn)(c)
 }
 

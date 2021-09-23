@@ -34,9 +34,9 @@ func (ck *TargetChecker) Transfer() (err error) {
 	case "https":
 		_, err = conn.Write([]byte("\x17\x03\x01\x00\x01\x00"))
 	case "http":
-		_, err = conn.Write([]byte("HEAD / HTTP/1.1\r\nHost: "+ ck.Host +"\r\n\r\n"))
+		_, err = conn.Write([]byte("HEAD / HTTP/1.1\r\nHost: " + ck.Host + "\r\n\r\n"))
 	default:
-		err = errors.New("[TargetChecker] unkown scheme: "+ u.Scheme)
+		err = errors.New("[TargetChecker] unkown scheme: " + u.Scheme)
 	}
 	if err != nil {
 		return
@@ -60,7 +60,7 @@ func (ck *TargetChecker) Check() (err error) {
 	case "socks4a":
 		cs, err = bufconn.DialSocks4a(ck.URL, ck.Timeout)
 	default:
-		err = errors.New("[TargetChecker] unknown scheme: "+ ck.URL.Scheme)
+		err = errors.New("[TargetChecker] unknown scheme: " + ck.URL.Scheme)
 		return
 	}
 	if err == nil {

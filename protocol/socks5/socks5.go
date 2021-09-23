@@ -15,15 +15,15 @@ import (
 
 // SOCKS auth type.
 const (
-	AUTHNONE        byte = 0
-	AUTHPASSWORD    byte = 2
+	AUTHNONE     byte = 0
+	AUTHPASSWORD byte = 2
 )
 
 // SOCKS address types.
 const (
-	CmdConnect  = 1
-	CmdBind     = 2
-	CmdUDP      = 3
+	CmdConnect = 1
+	CmdBind    = 2
+	CmdUDP     = 3
 )
 
 // SOCKS address types.
@@ -46,4 +46,3 @@ func Authorize(w io.Writer, rd *bufio.Reader) (err error) {
 	_, err = w.Write([]byte{5, 0})
 	return
 }
-

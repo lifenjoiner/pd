@@ -7,6 +7,6 @@ package server
 
 // Server stores the pd server config.
 type Server struct {
-	Addr    string
-	Config  *Config
+	Addr   string
+	Config *Config
 }

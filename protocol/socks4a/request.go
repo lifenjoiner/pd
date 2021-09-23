@@ -17,8 +17,8 @@ import (
 )
 
 type Request struct {
-	Ver         byte
-	Cmd         byte
+	Ver byte
+	Cmd byte
 	//AddrType    byte
 	DestHost    string
 	DestPort    string
@@ -37,19 +37,19 @@ func (r *Request) Command() (m string) {
 	return
 }
 
-func (r *Request) Target() (string) {
-	return r.DestHost +":"+ r.DestPort
+func (r *Request) Target() string {
+	return r.DestHost + ":" + r.DestPort
 }
 
-func (r *Request) Host() (string) {
-	return r.DestHost +":"+ r.DestPort
+func (r *Request) Host() string {
+	return r.DestHost + ":" + r.DestPort
 }
 
-func (r *Request) Hostname() (string) {
+func (r *Request) Hostname() string {
 	return r.DestHost
 }
 
-func (r *Request) Port() (string) {
+func (r *Request) Port() string {
 	return r.DestPort
 }
 
@@ -61,7 +61,6 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	}
 	return
 }
-
 
 func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
 	fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))

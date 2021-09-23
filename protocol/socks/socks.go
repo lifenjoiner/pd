@@ -12,19 +12,19 @@ import (
 
 // SOCKS request commands as defined in rfc1928.
 const (
-	CONNECT         byte = 1
-	BIND            byte = 2
-	UDPASSOCIATE    byte = 3
+	CONNECT      byte = 1
+	BIND         byte = 2
+	UDPASSOCIATE byte = 3
 )
 
 type Packet []byte
 
-func (p Packet) ReadIPv4(i int) (string) {
-	return net.IP(p[i:i+4]).String()
+func (p Packet) ReadIPv4(i int) string {
+	return net.IP(p[i : i+4]).String()
 }
 
-func (p Packet) ReadIPv6(i int) (string) {
-	return net.IP(p[i:i+16]).String()
+func (p Packet) ReadIPv6(i int) string {
+	return net.IP(p[i : i+16]).String()
 }
 
 func (p Packet) ReadString4a(i int) (string, int) {
@@ -37,13 +37,13 @@ func (p Packet) ReadString4a(i int) (string, int) {
 	return string(p[i:j]), j
 }
 
-func (p Packet) ReadString5(i int) (string) {
+func (p Packet) ReadString5(i int) string {
 	n := int(p[i])
 	i++
-	return string(p[i:i+n])
+	return string(p[i : i+n])
 }
 
-func (p Packet) ReadPort(i int) (string) {
+func (p Packet) ReadPort(i int) string {
 	return strconv.Itoa((int(p[i]) << 8) | int(p[i+1]))
 }
 

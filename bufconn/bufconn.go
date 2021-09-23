@@ -14,7 +14,7 @@ import (
 // Conn is a connection with bufio reader.
 type Conn struct {
 	net.Conn
-	R       *bufio.Reader
+	R *bufio.Reader
 }
 
 // Non-blocking.
@@ -44,7 +44,7 @@ func Dial(network, address string, timeout time.Duration) (*Conn, error) {
 func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
 	a := u.Host
 	if len(u.Port()) == 0 {
-		a += ":"+ u.Scheme
+		a += ":" + u.Scheme
 	}
 	n := "tcp"
 	if u.Scheme == "h3" {
@@ -73,6 +73,6 @@ func ReceiveData(r *bufio.Reader) ([]byte, error) {
 // The interface of Conn to solve the connection prerequisites to transfer the real data.
 // CONNECT to proxy. Maybe BIDN, UDP.
 type ConnSolver interface {
-	Bond(m, h, p string, b []byte) (error)
-	GetConn() (*Conn)
+	Bond(m, h, p string, b []byte) error
+	GetConn() *Conn
 }

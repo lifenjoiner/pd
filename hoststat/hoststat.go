@@ -29,19 +29,19 @@ const EwmaSlide int = 10
 
 // A single HostStat.
 type HostStat struct {
-	Value   float64     `json:"v"`
-	Count   int         `json:"n"`
-	Time    time.Time   `json:"t"`
-	ewma    *ewma.EWMA
+	Value float64   `json:"v"`
+	Count int       `json:"n"`
+	Time  time.Time `json:"t"`
+	ewma  *ewma.EWMA
 }
 
 // The whole HostStats.
 type HostStats struct {
 	sync.RWMutex
-	Stats           map[string]*HostStat `json`
-	Validity        time.Duration
-	BackupInterval  time.Duration
-	LastRecount     time.Time
+	Stats          map[string]*HostStat `json`
+	Validity       time.Duration
+	BackupInterval time.Duration
+	LastRecount    time.Time
 }
 
 // Update a host's stat by new value.
@@ -135,7 +135,7 @@ func (hs *HostStats) Save(file string) {
 // Load HostStats from a file, and save back the new results periodically.
 func MapStatsFile(file string) (hs *HostStats) {
 	hs = &HostStats{
-		Validity: 24 * time.Hour,
+		Validity:       24 * time.Hour,
 		BackupInterval: 5 * time.Minute,
 	}
 	hs.Load(file)

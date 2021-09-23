@@ -32,7 +32,7 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 	switch strings.ToUpper(m) {
 	case "CONNECT":
 	default:
-		return nil, errors.New("unsupported method: "+ m)
+		return nil, errors.New("unsupported method: " + m)
 	}
 
 	pp, err := socks.ToPacketPort(p)
@@ -41,7 +41,7 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 	}
 	l := len(h)
 	if l > 256 {
-		return nil, errors.New("too long hostname: "+ h)
+		return nil, errors.New("too long hostname: " + h)
 	}
 	data := []byte{5, 1, 0, 3}
 	data = append(data, byte(l))
@@ -74,11 +74,11 @@ func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
 	return
 }
 
-func (c *Socks5Conn) GetConn() (*Conn) {
+func (c *Socks5Conn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewSocks5Conn(c *Conn, u *url.URL) (*Socks5Conn) {
+func NewSocks5Conn(c *Conn, u *url.URL) *Socks5Conn {
 	return (*Socks5Conn)(c)
 }
 

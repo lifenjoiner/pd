@@ -19,7 +19,7 @@ type Socks5Server server.Server
 
 // Serve 1 client.
 func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) {
-	logPre := "[socks5] "+ c.RemoteAddr().String()
+	logPre := "[socks5] " + c.RemoteAddr().String()
 
 	err := socks5.Authorize(c, c.R)
 	if err != nil {
@@ -50,10 +50,10 @@ func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) {
 func (s *Socks5Server) ServeConnect(client *bufconn.Conn, req *socks5.Request) {
 	dp := &dispatcher.Dispatcher{
 		ServerType: "socks5",
-		Client: client,
-		DestHost: req.DestHost,
-		DestPort: req.DestPort,
-		Timeout: s.Config.UpstreamTimeout,
+		Client:     client,
+		DestHost:   req.DestHost,
+		DestPort:   req.DestPort,
+		Timeout:    s.Config.UpstreamTimeout,
 	}
 	dp.Dispatch(req)
 }
