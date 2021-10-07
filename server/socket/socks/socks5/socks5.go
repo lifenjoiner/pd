@@ -48,12 +48,7 @@ func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) {
 }
 
 func (s *Socks5Server) ServeConnect(client *bufconn.Conn, req *socks5.Request) {
-	dp := &dispatcher.Dispatcher{
-		ServerType: "socks5",
-		Client:     client,
-		DestHost:   req.DestHost,
-		DestPort:   req.DestPort,
-		Timeout:    s.Config.UpstreamTimeout,
-	}
+	dp := dispatcher.New("socks5", client, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
+	dp.ParallelDial = s.Config.ParallelDial
 	dp.Dispatch(req)
 }

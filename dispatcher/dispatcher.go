@@ -152,7 +152,7 @@ type goodConn struct {
 
 // Get the quickest responsive IP for a direct connection.
 func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
-	if !d.ParallelDial {
+	if !d.ParallelDial || (d.tried < 1 && d.maxTry > 1) || statichost.HostIsIP(d.DestHost) {
 		c, err := net.DialTimeout("tcp", net.JoinHostPort(d.DestHost, d.DestPort), d.Timeout)
 		if err != nil {
 			return nil, err

@@ -39,5 +39,6 @@ func (s *HttpServer) ServeHttp(c *bufconn.Conn) {
 		}
 		dp.DestPort = u.Scheme
 	}
+	dp.ParallelDial = s.Config.ParallelDial
 	dp.Dispatch(req)
 }
