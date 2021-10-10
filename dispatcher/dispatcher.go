@@ -211,8 +211,13 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 // Get the best proxy Conn.
 func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy *proxypool.Proxy, err error) {
 	ProxyPool := GlobalProxyPool[d.ServerType]
-	if ProxyPool != nil && d.proxyTried < len(ProxyPool.Proxies) {
-		proxy = ProxyPool.Proxies[d.proxyTried]
+	n := 0
+	if ProxyPool != nil {
+		n = len(ProxyPool.Proxies)
+	}
+	if n > 0 {
+		i := d.proxyTried % n
+		proxy = ProxyPool.Proxies[i]
 		switch d.ServerType {
 		case "http":
 			cs, err = bufconn.DialHttp(proxy.URL, ProxyPool.Timeout)
