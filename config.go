@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Listens     []string
-	NetProbeUrl string
+	NetProbeURL string
 	SvrConf     server.Config
 	StatFile    string
 	Blocked     string
@@ -26,7 +26,7 @@ func parseConfig() *Config {
 
 	s := flag.String("listens", "127.0.0.1:6699", "Listen addresses: [Host]:Port[,[Host]:Port][...]")
 	flag.DurationVar(&conf.SvrConf.UpstreamTimeout, "upstreamtimeout", 5*time.Second, "LookupHost/Dial/HandShake timeout, 3-7s is recommended. 20 * me for data transfer.")
-	flag.StringVar(&conf.NetProbeUrl, "netprobeurl", "https://example.com", "Used to probe if we are offline, and to ignore offline failures.")
+	flag.StringVar(&conf.NetProbeURL, "netprobeurl", "https://example.com", "Used to probe if we are offline, and to ignore offline failures.")
 	flag.BoolVar(&conf.SvrConf.ParallelDial, "paralleldial", true, "Try parallelly dial up IPs of a host.")
 	flag.StringVar(&conf.SvrConf.Proxies, "proxies", "", "Upstream proxy urls: [Scheme://]Host:Port[,[Scheme://]Host:Port][...], omitting scheme adopts all supported schemes (http, socks5, socks4a).")
 	flag.StringVar(&conf.SvrConf.ProxyProbeUrl, "proxyprobeurl", "https://www.google.com", "Used to probe if a proxy works.")

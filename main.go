@@ -28,13 +28,13 @@ func ServeFromConfig(config *Config) {
 	svrConf := &config.SvrConf
 	dispatcher.GlobalStaticHosts = statichost.MapStaticFiles(config.Blocked, config.Direct)
 	dispatcher.GlobalHostStats = hoststat.MapStatsFile(config.StatFile)
-	dispatcher.StartProbeDirect(config.NetProbeUrl, svrConf.UpstreamTimeout)
+	dispatcher.StartProbeDirect(config.NetProbeURL, svrConf.UpstreamTimeout)
 	go func() {
 		dispatcher.GlobalProxyPool = proxypool.InitProxyPool(svrConf.Proxies, svrConf.ProxyProbeUrl, svrConf.UpstreamTimeout)
 	}()
 
 	for _, listen := range config.Listens {
-		s := &tcp.TCPServer{listen, svrConf}
+		s := &tcp.TCPServer{Addr: listen, Config: svrConf}
 		go s.ListenAndServe()
 	}
 }
