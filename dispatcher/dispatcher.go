@@ -30,7 +30,7 @@ var (
 )
 
 // If we are offline, don't update the GlobalHostStats.
-var globalDirectIsOK bool
+var globalOnline bool
 
 // What a dispatcher instance is composed with.
 type Dispatcher struct {
@@ -90,7 +90,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 			return
 		}
 	}
-	if globalDirectIsOK && d.tried > 0 && strategy == statichost.StaticNil {
+	if globalOnline && d.tried > 0 && strategy == statichost.StaticNil {
 		GlobalHostStats.Update(req.Host(), 0)
 	}
 
@@ -108,7 +108,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 		if err != nil {
 			v = 0
 		}
-		if globalDirectIsOK && strategy == statichost.StaticNil {
+		if globalOnline && strategy == statichost.StaticNil {
 			GlobalHostStats.Update(req.Host(), v)
 		}
 	}
@@ -318,14 +318,14 @@ func NotInternetHost(h string) bool {
 
 // Check if we are online.
 func StartProbeDirect(Url string, d time.Duration) {
-	globalDirectIsOK = true
+	globalOnline = true
 	ck, err := checker.New(Url, d, "")
 	if err == nil {
 		go func() {
 			for {
-				globalDirectIsOK = ck.Check() == nil
+				globalOnline = ck.Check() == nil
 				msg := "offline"
-				if globalDirectIsOK {
+				if globalOnline {
 					msg = "online"
 				}
 				log.Printf("[dispatcher] We are %v.", msg)
