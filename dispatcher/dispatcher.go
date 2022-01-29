@@ -81,17 +81,18 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Target() + " <- " + d.Client.RemoteAddr().String()
 	log.Printf("%v [type:%v]", logPre, strategy)
 
+	h := d.DestHost + ":" + d.DestPort
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
 		err := d.ServeDirect(req)
 		if err == nil {
 			if strategy == statichost.StaticNil {
-				GlobalHostStats.Update(req.Host(), 1)
+				GlobalHostStats.Update(h, 1)
 			}
 			return
 		}
 	}
 	if globalOnline && d.tried > 0 && strategy == statichost.StaticNil {
-		GlobalHostStats.Update(req.Host(), 0)
+		GlobalHostStats.Update(h, 0)
 	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
@@ -109,7 +110,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 			v = 0
 		}
 		if globalOnline && strategy == statichost.StaticNil {
-			GlobalHostStats.Update(req.Host(), v)
+			GlobalHostStats.Update(h, v)
 		}
 	}
 }
