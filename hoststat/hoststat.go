@@ -133,9 +133,9 @@ func (hs *HostStats) Save(file string) {
 }
 
 // Load HostStats from a file, and save back the new results periodically.
-func MapStatsFile(file string) (hs *HostStats) {
+func MapStatsFile(file string, validity time.Duration) (hs *HostStats) {
 	hs = &HostStats{
-		Validity:       24 * time.Hour,
+		Validity:       validity,
 		BackupInterval: 5 * time.Minute,
 	}
 	hs.Load(file)
