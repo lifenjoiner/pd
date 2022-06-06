@@ -36,15 +36,14 @@ func (sh StaticHosts) Load(file string, strategy Strategy) {
 func (sh StaticHosts) Upsert(in string, strategy Strategy) {
 	lines := strings.Split(in, "\n")
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 {
+		dm := strings.Fields(line)
+		if len(dm) == 0 {
 			continue
 		}
-		dm := strings.Fields(line)[0]
-		if dm[0] == '#' {
+		if dm[0][0] == '#' {
 			continue
 		}
-		sh[dm] = strategy
+		sh[dm[0]] = strategy
 	}
 }
 

@@ -14,7 +14,7 @@ func TestGetHostStrategy(t *testing.T) {
 	log.Printf("StaticDirect: %v", StaticDirect)
 	log.Printf("StaticBlocked: %v", StaticBlocked)
 
-	list := "golang.org\ncn.github.com"
+	list := "golang.org\ncn.github.com	 # cn"
 
 	sd := StaticHosts{}
 	sd.Upsert(list, StaticDirect)
