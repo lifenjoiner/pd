@@ -26,7 +26,7 @@ type StaticHosts map[string]Strategy
 func (sh StaticHosts) Load(file string, strategy Strategy) {
 	data, err := os.ReadFile(file)
 	if err != nil {
-		log.Printf("[hoststats] %v", err)
+		log.Printf("[statichost] %v: %v", file, err)
 	}
 	sh.Upsert(string(data), strategy)
 }
