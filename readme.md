@@ -2,6 +2,7 @@
 
 
 ## Dos
+* Sub-domain rule first.
 * Static `blocked` hosts (IPs) go proxied directly.
 * Static `direct` hosts (IPs) always go direct (Never proxied). `direct` > `blocked`.
 * General hosts, go direct as dynamically calculated times, if unsolved, go proxied using the top 3 fastest proxies in order, fall back to a direct try if directly went proxied but no proxy configured.
@@ -32,7 +33,7 @@ www.google.com
 
 ## domain match: from right to left, `.` as separator, no `*`, no separator.
 # All `.cn` sites.
-cn
+cn  # *.cn
 # *.wikipedia.org
 wikipedia.org
 
