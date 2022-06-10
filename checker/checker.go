@@ -32,7 +32,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	conn.SetDeadline(time.Now().Add(ck.Timeout))
 	switch strings.ToLower(u.Scheme) {
 	case "https":
-		_, err = conn.Write([]byte("\x17\x03\x01\x00\x01\x00"))
+		_, err = conn.Write([]byte("\x15\x03\x03\x00\x01\x00"))
 	case "http":
 		_, err = conn.Write([]byte("HEAD / HTTP/1.1\r\nHost: " + ck.Host + "\r\n\r\n"))
 	default:

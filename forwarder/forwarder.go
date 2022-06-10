@@ -53,6 +53,13 @@ func (fw *Forwarder) Tunnel() error {
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
+				if TlsStage == TlsHandshake && LeftBuf[0] == TlsApplication && LeftBuf[1] == 0x03 {
+					// Request data is sent. Some server may response slowly: snapshot downloading from https://repo.or.cz
+					//log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
+					TlsStage = TlsApplication
+					LeftTimeout = LeftTlsAlive
+					RightTimeout = RightTlsAlive
+				}
 				//log.Printf("[forwarder] %v --> %v Read: %v", fw.LeftAddr, fw.RightAddr, n)
 				fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 				_, RwErr = fw.RightConn.Write(LeftBuf[0:n])
@@ -92,6 +99,7 @@ func (fw *Forwarder) Tunnel() error {
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
 				} else if RightBuf[0] == TlsApplication && RightBuf[1] == 0x03 {
+					// Response data is received.
 					//log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
 					TlsStage = TlsApplication
 					gotRightData = true
