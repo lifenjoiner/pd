@@ -44,6 +44,17 @@ type HostStats struct {
 	LastRecount    time.Time
 }
 
+// Get the HostStat.
+func (hs *HostStats) GetStat(h string) (stat HostStat) {
+	hs.RLock()
+	st := hs.Stats[h]
+	if st != nil {
+		stat = *st
+	}
+	hs.RUnlock()
+	return
+}
+
 // Update a host's stat by new value.
 func (hs *HostStats) Update(h string, v float64) {
 	hs.Lock()
@@ -107,20 +118,22 @@ func (hs *HostStats) Load(file string) {
 		data = []byte("{}")
 	}
 
+	hs.Lock()
 	err = json.Unmarshal(data, &hs.Stats)
 	if err != nil {
 		log.Printf("[hoststats] %v", err)
 	}
 	hs.LastRecount = time.Now()
+	hs.Unlock()
 	hs.Cleanup()
 }
 
 // Save HostStats to a file.
 func (hs *HostStats) Save(file string) {
 	hs.Cleanup()
-	hs.Lock()
+	hs.RLock()
 	data, err := json.MarshalIndent(hs.Stats, "", "\t")
-	hs.Unlock()
+	hs.RUnlock()
 	if err != nil {
 		log.Printf("[hoststats] %v", err)
 		data = []byte("{}")

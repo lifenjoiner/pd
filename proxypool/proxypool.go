@@ -81,13 +81,28 @@ type ProxyPool struct {
 	Timeout       time.Duration
 }
 
+// Get a proxy by index mapping.
+func (pp *ProxyPool) GetProxy(i int) (p Proxy) {
+	pp.RLock()
+	n := len(pp.Proxies)
+	if n > 0 {
+		p = *pp.Proxies[i%n]
+	}
+	pp.RUnlock()
+	return
+}
+
 // Update and sort the EWMA of proxies in the pool.
 func (pp *ProxyPool) Update() {
-	p := pp.Proxies
-	N := len(p)
+	pp.RLock()
+	N := len(pp.Proxies)
+	p := make([]*Proxy, N)
+	copy(p, pp.Proxies) // Both are slice!
+	pp.RUnlock()
 	if N <= 0 {
 		return
 	}
+
 	var wg sync.WaitGroup
 	wg.Add(N)
 	for i := 0; i < N; i++ {
@@ -106,12 +121,12 @@ func (pp *ProxyPool) Update() {
 	wg.Wait()
 
 	pp.Lock()
-	sort.Slice(p, func(i, j int) bool {
-		return p[i].Ewma.Value() < p[j].Ewma.Value()
+	sort.Slice(pp.Proxies, func(i, j int) bool {
+		return pp.Proxies[i].Ewma.Value() < pp.Proxies[j].Ewma.Value()
 	})
 	log.Printf("[ProxyPool] Sorted latencies:")
 	for i := 0; i < N; i++ {
-		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(p[i].Ewma.Value()), p[i].URL.Scheme, p[i].URL.Host)
+		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(pp.Proxies[i].Ewma.Value()), pp.Proxies[i].URL.Scheme, pp.Proxies[i].URL.Host)
 	}
 	pp.Unlock()
 }
@@ -142,7 +157,9 @@ func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*Pr
 			if pp[s] == nil {
 				pp[s] = &ProxyPool{}
 			}
+			pp[s].Lock()
 			pp[s].Proxies = append(pp[s].Proxies, proxies[i])
+			pp[s].Unlock()
 		case "":
 			for j := 0; j < len(allowedSchemes); j++ {
 				scheme := allowedSchemes[j]
@@ -152,7 +169,9 @@ func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*Pr
 				if pp[scheme] == nil {
 					pp[scheme] = &ProxyPool{}
 				}
+				pp[scheme].Lock()
 				pp[scheme].Proxies = append(pp[scheme].Proxies, ph)
+				pp[scheme].Unlock()
 			}
 		default:
 			log.Printf("[ProxyPool] unsupported proxy: %v", proxies[i].Url)
@@ -163,8 +182,10 @@ func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*Pr
 		if pp[scheme] == nil {
 			continue
 		}
+		pp[scheme].Lock()
 		pp[scheme].ProxyProbeUrl = ut
 		pp[scheme].Timeout = d
+		pp[scheme].Unlock()
 		go func() {
 			for {
 				log.Printf("[ProxyPool] %v updating ...", scheme)

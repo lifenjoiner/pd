@@ -123,8 +123,8 @@ func (d *Dispatcher) DispatchByStaticRules() statichost.Strategy {
 // Solve the direct connect tries by HostStat.
 func (d *Dispatcher) DispatchByStats() {
 	h := d.DestHost + ":" + d.DestPort
-	stat := GlobalHostStats.Stats[h]
-	if stat == nil || stat.Value > 0.8 {
+	stat := GlobalHostStats.GetStat(h)
+	if stat.Count == 0 || stat.Value > 0.8 {
 		d.maxTry = 3
 	} else if stat.Value > 0.6 {
 		d.maxTry = 2
@@ -210,15 +210,10 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 }
 
 // Get the best proxy Conn.
-func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy *proxypool.Proxy, err error) {
+func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Proxy, err error) {
 	ProxyPool := GlobalProxyPool[d.ServerType]
-	n := 0
-	if ProxyPool != nil {
-		n = len(ProxyPool.Proxies)
-	}
-	if n > 0 {
-		i := d.proxyTried % n
-		proxy = ProxyPool.Proxies[i]
+	proxy = ProxyPool.GetProxy(d.proxyTried)
+	if proxy.URL != nil {
 		switch d.ServerType {
 		case "http":
 			cs, err = bufconn.DialHttp(proxy.URL, ProxyPool.Timeout)
