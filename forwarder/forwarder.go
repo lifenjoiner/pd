@@ -84,7 +84,7 @@ func (fw *Forwarder) Tunnel() error {
 			// RightBuf has enough space.
 			if TlsStage == 0x00 {
 				TlsStage = RightBuf[0]
-				if RightBuf[0] == TlsHandshake && RightBuf[1] == 0x03 {
+				if RightBuf[0] == TlsHandshake && n > 1 && RightBuf[1] == 0x03 {
 					// Tls v1.2, a: ServerHello + Certificate + ServerKeyExchange + ServerHelloDone
 					// Tls v1.2, b: ServerHello + ChangeCipherSpec + EncryptedHandshakeMessage
 					// Tls v1.3: ServerHello + ChangeCipherSpec + ApplicationData
@@ -93,12 +93,12 @@ func (fw *Forwarder) Tunnel() error {
 					gotRightData = true
 				}
 			} else if TlsStage == TlsHandshake {
-				if (RightBuf[0] == TlsHandshake || RightBuf[0] == TlsChangeCipher) && RightBuf[1] == 0x03 {
+				if (RightBuf[0] == TlsHandshake || RightBuf[0] == TlsChangeCipher) && n > 1 && RightBuf[1] == 0x03 {
 					// Tls v1.2, a: [NewSessionTicket + ]ChangeCipherSpec + EncryptedHandshakeMessage
 					// Weixin server sleeps (25s) before sending application data for heartbeats.
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
-				} else if RightBuf[0] == TlsApplication && RightBuf[1] == 0x03 {
+				} else if RightBuf[0] == TlsApplication && n > 1 && RightBuf[1] == 0x03 {
 					// Response data is received.
 					//log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
 					TlsStage = TlsApplication
