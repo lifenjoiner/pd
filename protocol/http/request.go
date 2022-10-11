@@ -144,14 +144,9 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+// https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
 func cleanHeaders(header textproto.MIMEHeader) {
 	header.Del("Proxy-Connection")
 	header.Del("Proxy-Authenticate")
 	header.Del("Proxy-Authorization")
-	header.Del("Connection")
-	header.Del("Keep-Alive")
-	header.Del("TE")
-	header.Del("Trailers")
-	header.Del("Transfer-Encoding")
-	header.Del("Upgrade")
 }
