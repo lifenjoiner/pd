@@ -135,7 +135,7 @@ func (pp *ProxyPool) Update() {
 func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*ProxyPool) {
 	pp = make(map[string]*ProxyPool)
 	Url := strings.Split(urls, ",")
-	ut, err := url.ParseRequestURI(test)
+	ut, err := url.Parse(test)
 	if err != nil {
 		log.Printf("[ProxyPool] %v", err)
 		return

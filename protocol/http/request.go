@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/textproto"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/lifenjoiner/pd/bufconn"
@@ -125,17 +124,12 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 
 	// The net/rpc package also uses CONNECT.
 	rawUrl := r.Url
-	justAuthority := r.Method == "CONNECT" && !strings.HasPrefix(rawUrl, "/")
-	if justAuthority {
-		rawUrl = "http://" + rawUrl
+	if r.Method == "CONNECT" {
+		rawUrl = "//" + rawUrl
 	}
-	r.URL, err = url.ParseRequestURI(rawUrl)
+	r.URL, err = url.Parse(rawUrl)
 	if err != nil {
 		return nil, err
-	}
-	if justAuthority {
-		// Strip the bogus "http://" back off.
-		r.URL.Scheme = ""
 	}
 
 	r.PostData, err = bufconn.ReadData(rd)
