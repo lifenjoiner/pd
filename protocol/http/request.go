@@ -96,7 +96,7 @@ func (r *Request) writeRequest(w io.Writer) (err error) {
 	cleanHeaders(r2.Header)
 	// Proxy Authorization: LAN proxy doesn't need, in WAN it is BLOCKED!
 	r2.Header.Set("Host", r.URL.Host)
-	err = writeStartLine(w, r2.Method, r2.Url, r2.Proto)
+	err = writeStartLine(w, r2.Method, r2.URL.RequestURI(), r2.Proto)
 	if err != nil {
 		return
 	}
