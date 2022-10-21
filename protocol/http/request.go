@@ -64,12 +64,16 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
+func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if r.Method == "CONNECT" {
 		if len(r.TlsData) > 0 {
-			_, err = fw.RightConn.Write(r.TlsData)
+			if seg {
+				_, err = fw.RightConn.SplitWrite(r.TlsData, 6)
+			} else {
+				_, err = fw.RightConn.Write(r.TlsData)
+			}
 		} else {
 			// drop it
 			return nil

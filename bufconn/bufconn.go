@@ -27,6 +27,23 @@ func (c *Conn) ReceiveData() ([]byte, error) {
 	return ReceiveData(c.R)
 }
 
+// Break length pattern.
+func (c *Conn) SplitWrite(b []byte, x int) (n int, err error) {
+	i := 0
+	if len(b) > x {
+		i = x
+		n, err = c.Write(b[:i])
+		if err != nil {
+			return
+		} else {
+			time.Sleep(time.Millisecond)
+		}
+	}
+	n, err = c.Write(b[i:])
+	n += i
+	return
+}
+
 func NewConn(c net.Conn) *Conn {
 	cc := &Conn{c, bufio.NewReader(c)}
 	return cc

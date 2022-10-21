@@ -18,6 +18,6 @@ type Requester interface {
 	Host() string
 	Hostname() string
 	Port() string
-	GetRequest(io.Writer, *bufio.Reader) error
-	Request(*forwarder.Forwarder) error
+	GetRequest(w io.Writer, r *bufio.Reader) error
+	Request(fw *forwarder.Forwarder, seg bool) error
 }

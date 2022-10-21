@@ -64,10 +64,14 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) Request(fw *forwarder.Forwarder) (err error) {
+func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
-	_, err = fw.RightConn.Write(r.RequestData)
+	if seg {
+		_, err = fw.RightConn.SplitWrite(r.RequestData, 6)
+	} else {
+		_, err = fw.RightConn.Write(r.RequestData)
+	}
 	if err == nil {
 		err = fw.Tunnel()
 	}
