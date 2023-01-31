@@ -212,6 +212,10 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 // Get the best proxy Conn.
 func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Proxy, err error) {
 	ProxyPool := GlobalProxyPool[d.ServerType]
+	if ProxyPool == nil {
+		err = errors.New("No valid proxy.")
+		return
+	}
 	proxy = ProxyPool.GetProxy(d.proxyTried)
 	if proxy.URL != nil {
 		switch d.ServerType {
