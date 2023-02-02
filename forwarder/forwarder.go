@@ -24,7 +24,16 @@ type Forwarder struct {
 
 // The reading size, could > 4k, need big enough to get the whole Tls Handshake packets.
 // ServerHello + Certificate + ServerHelloDone
-const BufferSize int = 8192
+//
+// Better Fragmentation for Loopback:
+// Header length: IPv4 20 [~ 60] octets, IPv6 40 octets, TCP 20 [~ 60] octets; Options are rare.
+// IP MTU = 64k (65535 bytes), so, TCP MSS = 65495 [~ 65415] bytes.
+// While Ethernet v2 (WAN) MTU = 1500 bytes, yields TCP MSS = 1460 [~ 1380] bytes.
+// Fragmentation: https://en.wikipedia.org/wiki/IP_fragmentation
+// 500k = 512000 = 7 * 65495 + 53535 = 350 * 1460 + 1000, 1460 - 1000 = 460
+// Set BufferSize big enough to reduce `cgocall` costing CPU usage, but not too big, that will consume lots of memory!
+// For high/full speed traffic calling WSARecv/WSASend.
+const BufferSize int = 1024 * 500
 
 const (
 	TlsHandshake    byte = 0x16
