@@ -33,6 +33,7 @@ type Forwarder struct {
 // 500k = 512000 = 7 * 65495 + 53535 = 350 * 1460 + 1000, 1460 - 1000 = 460
 // Set BufferSize big enough to reduce `cgocall` costing CPU usage, but not too big, that will consume lots of memory!
 // For high/full speed traffic calling WSARecv/WSASend.
+// 4k for direct `ReadFrom` is observed, and high CPU usage.
 const BufferSize int = 1024 * 500
 
 const (
@@ -62,7 +63,7 @@ func (fw *Forwarder) Tunnel() error {
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
-				if TlsStage == TlsHandshake && LeftBuf[0] == TlsApplication && LeftBuf[1] == 0x03 {
+				if TlsStage == TlsHandshake && LeftBuf[0] == TlsApplication && n > 1 && LeftBuf[1] == 0x03 {
 					// Request data is sent. Some server may response slowly: snapshot downloading from https://repo.or.cz
 					//log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
 					TlsStage = TlsApplication
@@ -115,9 +116,10 @@ func (fw *Forwarder) Tunnel() error {
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
 				} else {
-					TlsStage = 0xff
-					gotRightData = false
+					// Certificate fragmentation has been observed.
 				}
+			} else if TlsStage == TlsApplication {
+				gotRightData = true
 			}
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			_, LwErr = fw.LeftConn.Write(RightBuf[0:n])
