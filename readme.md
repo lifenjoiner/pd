@@ -1,18 +1,19 @@
 `pd` is a local proxy dispatcher.
 
+## Usage
+Try `pd -h`.
 
 ## Dos
 * Sub-domain rule first.
 * Static `blocked` hosts (IPs) go proxied directly.
 * Static `direct` hosts (IPs) always go direct (Never proxied). `direct` > `blocked`.
-* General hosts, go direct as dynamically calculated times, if unsolved, go proxied using the top 3 fastest proxies in order, fall back to a direct try if directly went proxied but no proxy configured.
-* Trust the specified DNS. If the DNS isn't reliable enough, improve it, or place the special host in `blocked` to go proxied directly. Use `0.0.0.0`/`::` or disabled domains to block hosts. `127.0.0.1`/`::1` or other reserved IPs are legal to be a server.
+* General hosts, go direct as dynamically calculated times, if unsolved, go proxied with 3 tries using the fastest proxies in order, fall back to a direct try if directly went proxied but no proxy configured.
+* Trust the specified DNS. If the DNS isn't reliable enough, improve it, or place the special host in `blocked` to go proxied directly. For DNS servers, use `0.0.0.0`/`::` or disabled domain list to block hosts, `127.0.0.1`/`::1` or other reserved IPs are legal to be a server.
 * Forward going proxied requests to the same protocol proxy. `socks4a` is a super set of `socks4`.
 
 ## Don'ts
-* No proxy authentication. No need for local proxies.
-* No request on Non-Global-Internet-IP or No-domain- host will go proxied.
-
+* Proxy authentication. No need for local proxies.
+* Non-Global-Internet-IPs or No-domain-hosts go to upstream proxies.
 
 ## Static Host Matching Syntax
 
@@ -43,7 +44,6 @@ wikipedia.org
 # 192.168.0.0-192.168.255.255.
 192.168.*
 ```
-
 
 ## Statistics Vs Privacy
 
