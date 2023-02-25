@@ -36,6 +36,12 @@ type Forwarder struct {
 // 4k for direct `ReadFrom` is observed, and high CPU usage.
 const BufferSize int = 1024 * 500
 
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, BufferSize)
+	},
+}
+
 const (
 	TlsHandshake    byte = 0x16
 	TlsChangeCipher byte = 0x14
@@ -58,7 +64,7 @@ func (fw *Forwarder) Tunnel() error {
 	go func() {
 		defer wg.Done()
 		var n int
-		LeftBuf := make([]byte, BufferSize)
+		LeftBuf := bufPool.Get().([]byte)
 		for {
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
@@ -83,9 +89,10 @@ func (fw *Forwarder) Tunnel() error {
 				break
 			}
 		}
+		bufPool.Put(LeftBuf)
 	}()
 
-	RightBuf := make([]byte, BufferSize)
+	RightBuf := bufPool.Get().([]byte)
 	for {
 		var n int
 		fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
@@ -130,6 +137,7 @@ func (fw *Forwarder) Tunnel() error {
 			break
 		}
 	}
+	bufPool.Put(RightBuf)
 	wg.Wait()
 
 	fw.RightConn.SetDeadline(time.Now())
