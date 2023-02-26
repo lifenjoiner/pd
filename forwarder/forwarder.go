@@ -34,11 +34,14 @@ type Forwarder struct {
 // Set BufferSize big enough to reduce `cgocall` costing CPU usage, but not too big, that will consume lots of memory!
 // For high/full speed traffic calling WSARecv/WSASend.
 // 4k for direct `ReadFrom` is observed, and high CPU usage.
-const BufferSize int = 1024 * 500
+const (
+	maxBufferSize int = 1024 * 1000
+	minBufferSize int = 1024 * 100
+)
 
 var bufPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, BufferSize)
+		return make([]byte, minBufferSize)
 	},
 }
 
@@ -66,6 +69,9 @@ func (fw *Forwarder) Tunnel() error {
 		var n int
 		LeftBuf := bufPool.Get().([]byte)
 		for {
+			if x := cap(LeftBuf); n == x && x < maxBufferSize {
+				LeftBuf = make([]byte, x+minBufferSize)
+			}
 			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
@@ -92,9 +98,12 @@ func (fw *Forwarder) Tunnel() error {
 		bufPool.Put(LeftBuf)
 	}()
 
+	var n int
 	RightBuf := bufPool.Get().([]byte)
 	for {
-		var n int
+		if x := cap(RightBuf); n == x && x < maxBufferSize {
+			RightBuf = make([]byte, x+minBufferSize)
+		}
 		fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
 		if RrErr == nil {
