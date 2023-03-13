@@ -93,6 +93,8 @@ func (r *Request) writeRequest(w io.Writer) (err error) {
 	var r2 *Request = &Request{}
 	*r2 = *r
 	cleanHeaders(r2.Header)
+	// Does not support http keep-alive.
+	r2.Header.Set("Connection", "close")
 	// Proxy Authorization: LAN proxy doesn't need, in WAN it is BLOCKED!
 	r2.Header.Set("Host", r.URL.Host)
 	err = writeStartLine(w, r2.Method, r2.URL.RequestURI(), r2.Proto)
