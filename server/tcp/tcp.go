@@ -5,7 +5,6 @@
 package tcp
 
 import (
-	"bytes"
 	"log"
 	"net"
 	"time"
@@ -62,14 +61,7 @@ func (s *TCPServer) Serve(c *bufconn.Conn) {
 		return
 	}
 
-	data, err = c.R.Peek(8)
-	if err != nil {
-		log.Printf("[tcp] drop %v, error: %v", c.RemoteAddr(), err)
-		return
-	}
-	if bytes.Equal(data, []byte("CONNECT ")) || bytes.HasPrefix(data, []byte("GET ")) {
-		http := (*http.HttpServer)(s)
-		http.ServeHttp(c)
-		return
-	}
+	http := (*http.HttpServer)(s)
+	http.ServeHttp(c)
+	return
 }
