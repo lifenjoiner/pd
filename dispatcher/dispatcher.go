@@ -261,6 +261,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 			Timeout:   d.Timeout,
 		}
 		err = req.Request(fw)
+		c.Close()
 	} else if IsDnsErr(err) {
 		// Trust the specified DNS.
 		// If the DNS isn't reliable enough, place a host in `blocked` to go proxied directly.
@@ -301,6 +302,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) error {
 			}
 			err = req.Request(fw)
 		}
+		c.Close()
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
