@@ -25,14 +25,13 @@ func (s *HttpServer) ServeHttp(c *bufconn.Conn) {
 	}
 
 	u := req.URL
-	isConnect := req.Method == "CONNECT"
-	if (isConnect && u.Host == "") || (!isConnect && !u.IsAbs()) {
+	if (u.Host == "") {
 		log.Printf("[http] Invalid request.")
-		return
+		return false
 	}
 
 	dp := dispatcher.New("http", c, u.Hostname(), u.Port(), s.Config.UpstreamTimeout)
-	if !isConnect && dp.DestPort == "" {
+	if dp.DestPort == "" && req.Method != "CONNECT" {
 		if u.Scheme == "" {
 			u.Scheme = "http"
 		}

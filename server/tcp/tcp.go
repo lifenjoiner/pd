@@ -54,14 +54,11 @@ func (s *TCPServer) Serve(c *bufconn.Conn) {
 	case 5:
 		socks5 := (*socks5.Socks5Server)(s)
 		socks5.ServeSocks5(c)
-		return
 	case 4:
 		socks4a := (*socks4a.Socks4aServer)(s)
 		socks4a.ServeSocks4a(c)
-		return
+	default:
+		http := (*http.HttpServer)(s)
+		http.ServeHttp(c)
 	}
-
-	http := (*http.HttpServer)(s)
-	http.ServeHttp(c)
-	return
 }

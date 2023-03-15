@@ -150,7 +150,7 @@ func (fw *Forwarder) Tunnel() error {
 	wg.Wait()
 
 	fw.RightConn.SetDeadline(time.Now())
-	fw.RightConn.Close()
+	fw.LeftConn.SetDeadline(time.Now())
 	ok := gotRightData || isReset(LrErr) || isEOF(LrErr)
 	//log.Print(LrErr)
 	//log.Print(LwErr)
@@ -158,11 +158,8 @@ func (fw *Forwarder) Tunnel() error {
 	//log.Print(RwErr)
 	//log.Print(ok)
 	if ok {
-		fw.LeftConn.SetDeadline(time.Now())
-		fw.LeftConn.Close()
 		return nil
 	} else {
-		fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 		return RrErr
 	}
 }

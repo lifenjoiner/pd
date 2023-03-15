@@ -83,8 +83,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 
 	h := d.DestHost + ":" + d.DestPort
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
-		err := d.ServeDirect(req)
-		if err == nil {
+		if d.ServeDirect(req) == nil {
 			if strategy == statichost.StaticNil {
 				GlobalHostStats.Update(h, 1)
 			}
@@ -104,9 +103,8 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 	if d.maxTry == 0 {
 		log.Printf("%v <= no proxy, try direct", logPre)
 		d.maxTry = 1
-		err := d.ServeDirect(req)
 		v := 1.0
-		if err != nil {
+		if d.ServeDirect(req) != nil {
 			v = 0
 		}
 		if globalOnline && strategy == statichost.StaticNil {
