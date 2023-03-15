@@ -39,7 +39,7 @@ func (p *Proxy) Dial(d time.Duration) error {
 }
 
 func (p *Proxy) Check(target *url.URL, d time.Duration) error {
-	ck := &checker.TargetChecker{p.URL, d, nil, target}
+	ck := checker.NewTargetChecker(p.URL, d, nil, target)
 	return ck.Check()
 }
 

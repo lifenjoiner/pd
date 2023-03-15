@@ -38,7 +38,7 @@ type HostStat struct {
 // The whole HostStats.
 type HostStats struct {
 	sync.RWMutex
-	Stats          map[string]*HostStat `json`
+	Stats          map[string]*HostStat
 	Validity       time.Duration
 	BackupInterval time.Duration
 	LastRecount    time.Time

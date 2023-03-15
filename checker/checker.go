@@ -85,6 +85,10 @@ func (ck *TargetChecker) Check() (err error) {
 	return
 }
 
+func NewTargetChecker(u *url.URL, d time.Duration, c *bufconn.Conn, p *url.URL) *TargetChecker {
+	return &TargetChecker{u, d, c, p}
+}
+
 func New(s string, d time.Duration, p string) (*TargetChecker, error) {
 	if len(s) == 0 {
 		return nil, errors.New("[TargetChecker] server URL is empty.")
@@ -100,5 +104,5 @@ func New(s string, d time.Duration, p string) (*TargetChecker, error) {
 	if err != nil {
 		return nil, errors.New("[TargetChecker] proxy URL is invalid.")
 	}
-	return &TargetChecker{u, d, nil, pu}, nil
+	return NewTargetChecker(u, d, nil, pu), nil
 }
