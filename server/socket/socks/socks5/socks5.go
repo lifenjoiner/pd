@@ -18,25 +18,24 @@ import (
 type Socks5Server server.Server
 
 // Serve 1 client.
-func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) {
+func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) bool {
 	logPre := "[socks5] " + c.RemoteAddr().String()
 
 	err := socks5.Authorize(c, c.R)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
-		return
+		return false
 	}
 	req, err := socks5.ParseRequest(c.R)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
-		return
+		return false
 	}
 
 	var msg string
 	switch req.Cmd {
 	case socks.CONNECT:
-		s.ServeConnect(c, req)
-		return
+		return s.ServeConnect(c, req)
 	case socks.BIND:
 		msg = "unimplemented BIND"
 	case socks.UDPASSOCIATE:
@@ -45,10 +44,11 @@ func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) {
 		msg = "unsupported command"
 	}
 	log.Printf("%v <= %v", logPre, msg)
+	return false
 }
 
-func (s *Socks5Server) ServeConnect(client *bufconn.Conn, req *socks5.Request) {
+func (s *Socks5Server) ServeConnect(client *bufconn.Conn, req *socks5.Request) bool {
 	dp := dispatcher.New("socks5", client, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
 	dp.ParallelDial = s.Config.ParallelDial
-	dp.Dispatch(req)
+	return dp.Dispatch(req)
 }

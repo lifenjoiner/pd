@@ -60,7 +60,7 @@ func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispat
 }
 
 // The main dispatcher, that dispatches how a client connection will be served.
-func (d *Dispatcher) Dispatch(req protocol.Requester) {
+func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	d.maxProxyTry = 3
 	strategy := d.DispatchByStaticRules()
 	switch strategy {
@@ -87,7 +87,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 			if strategy == statichost.StaticNil {
 				GlobalHostStats.Update(h, 1)
 			}
-			return
+			return true
 		}
 	}
 	if globalOnline && d.tried > 0 && strategy == statichost.StaticNil {
@@ -96,21 +96,24 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) {
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
 		if d.ServeProxied(req) == nil {
-			return
+			return true
 		}
 	}
 
+	b := true
 	if d.maxTry == 0 {
 		log.Printf("%v <= no proxy, try direct", logPre)
 		d.maxTry = 1
 		v := 1.0
 		if d.ServeDirect(req) != nil {
 			v = 0
+			b = false
 		}
 		if globalOnline && strategy == statichost.StaticNil {
 			GlobalHostStats.Update(h, v)
 		}
 	}
+	return b
 }
 
 // Decide whether the host is aways go direct or proxied.

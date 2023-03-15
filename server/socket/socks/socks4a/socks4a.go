@@ -18,30 +18,30 @@ import (
 type Socks4aServer server.Server
 
 // Serve 1 client.
-func (s *Socks4aServer) ServeSocks4a(c *bufconn.Conn) {
+func (s *Socks4aServer) ServeSocks4a(c *bufconn.Conn) bool {
 	logPre := "[socks4a] " + c.RemoteAddr().String()
 
 	req, err := socks4a.ParseRequest(c.R)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
-		return
+		return false
 	}
 
 	var msg string
 	switch req.Cmd {
 	case socks.CONNECT:
-		s.ServeConnect(c, req)
-		return
+		return s.ServeConnect(c, req)
 	case socks.BIND:
 		msg = "unimplemented BIND"
 	default:
 		msg = "unsupported command"
 	}
 	log.Printf("%v <= %v", logPre, msg)
+	return false
 }
 
-func (s *Socks4aServer) ServeConnect(client *bufconn.Conn, req *socks4a.Request) {
+func (s *Socks4aServer) ServeConnect(client *bufconn.Conn, req *socks4a.Request) bool {
 	dp := dispatcher.New("socks4a", client, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
 	dp.ParallelDial = s.Config.ParallelDial
-	dp.Dispatch(req)
+	return dp.Dispatch(req)
 }

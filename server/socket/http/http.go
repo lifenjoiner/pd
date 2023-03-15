@@ -17,11 +17,11 @@ import (
 type HttpServer server.Server
 
 // Serve 1 client.
-func (s *HttpServer) ServeHttp(c *bufconn.Conn) {
+func (s *HttpServer) ServeHttp(c *bufconn.Conn) bool {
 	req, err := http.ParseRequest(c.R)
 	if err != nil {
-		log.Printf("[http] ", err)
-		return
+		log.Printf("[http] %v", err)
+		return false
 	}
 
 	u := req.URL
@@ -38,5 +38,5 @@ func (s *HttpServer) ServeHttp(c *bufconn.Conn) {
 		dp.DestPort = u.Scheme
 	}
 	dp.ParallelDial = s.Config.ParallelDial
-	dp.Dispatch(req)
+	return dp.Dispatch(req)
 }
