@@ -12,6 +12,7 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
+// Config of the tool.
 type Config struct {
 	Listens      []string
 	NetProbeURL  string
