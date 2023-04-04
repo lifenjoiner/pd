@@ -204,7 +204,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 		if conn != nil || err != nil {
 			break
 		}
-		time.Sleep(1)
+		time.Sleep(time.Nanosecond)
 	}
 
 	return conn, err
