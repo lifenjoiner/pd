@@ -214,7 +214,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Proxy, err error) {
 	ProxyPool := GlobalProxyPool[d.ServerType]
 	if ProxyPool == nil {
-		err = errors.New("No valid proxy.")
+		err = errors.New("no valid proxy")
 		return
 	}
 	proxy = ProxyPool.GetProxy(d.proxyTried)
@@ -233,10 +233,10 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 			c := cs.GetConn()
 			_ = c.SetDeadline(time.Now())
 			c.Close()
-			err = errors.New("Proxy authentication is not implemented.")
+			err = errors.New("proxy authentication is not implemented")
 		}
 	} else {
-		err = errors.New("No valid proxy.")
+		err = errors.New("no valid proxy")
 	}
 	return
 }

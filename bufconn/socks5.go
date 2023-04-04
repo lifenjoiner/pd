@@ -23,7 +23,7 @@ func (c *Socks5Conn) authorize() (err error) {
 	var p socks.Packet
 	p, err = ReceiveData(c.R)
 	if err == nil && p[1] != 0 {
-		err = errors.New("Authorization failed")
+		err = errors.New("[socks5] authorization failed")
 	}
 	return
 }
@@ -32,7 +32,7 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 	switch strings.ToUpper(m) {
 	case "CONNECT":
 	default:
-		return nil, errors.New("unsupported method: " + m)
+		return nil, errors.New("[socks5] unsupported method: " + m)
 	}
 
 	pp, err := socks.ToPacketPort(p)
@@ -41,7 +41,7 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 	}
 	l := len(h)
 	if l > 256 {
-		return nil, errors.New("too long hostname: " + h)
+		return nil, errors.New("[socks5] too long hostname: " + h)
 	}
 	data := []byte{5, 1, 0, 3}
 	data = append(data, byte(l))
@@ -67,7 +67,7 @@ func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
 				if b[1] == 0 {
 					return nil
 				}
-				err = errors.New("CONNECT failed")
+				err = errors.New("[socks5] CONNECT failed")
 			}
 		}
 	}

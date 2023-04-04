@@ -42,7 +42,7 @@ func (c *HttpConn) Bond(m, h, p string, b []byte) (err error) {
 				_, err = c.R.Discard(c.R.Buffered())
 				return
 			}
-			err = errors.New("no available http proxy server")
+			err = errors.New("[http] no available proxy server")
 		}
 	}
 	return err
