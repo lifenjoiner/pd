@@ -39,8 +39,8 @@ func (c *HttpConn) Bond(m, h, p string, b []byte) (err error) {
 		line, _, err = c.R.ReadLine()
 		if err == nil {
 			if strings.Contains(string(line), " 200 ") {
-				c.R.Discard(c.R.Buffered())
-				return nil
+				_, err = c.R.Discard(c.R.Buffered())
+				return
 			}
 			err = errors.New("no available http proxy server")
 		}

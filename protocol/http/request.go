@@ -55,9 +55,11 @@ func (r *Request) Port() string {
 // RCWN (Race Cache With Network) or ads blockers would abort dial-in without sendig ClientHello! Drop it.
 func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	if !r.Responsed {
-		w.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
+		_, err = w.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
 		r.Responsed = true
-		err = r.cacheTlsData(rd)
+		if err == nil {
+			err = r.cacheTlsData(rd)
+		}
 	}
 	return
 }

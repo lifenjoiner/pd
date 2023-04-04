@@ -56,9 +56,11 @@ func (r *Request) Port() string {
 
 func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	if !r.Responsed {
-		w.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0})
+		_, err = w.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0})
 		r.Responsed = true
-		r.RequestData, err = bufconn.ReceiveData(rd)
+		if err == nil {
+			r.RequestData, err = bufconn.ReceiveData(rd)
+		}
 	}
 	return
 }
