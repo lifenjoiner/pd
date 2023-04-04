@@ -41,7 +41,8 @@ const (
 
 var bufPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, minBufferSize)
+		b := make([]byte, minBufferSize)
+		return &b
 	},
 }
 
@@ -67,7 +68,8 @@ func (fw *Forwarder) Tunnel() error {
 	go func() {
 		defer wg.Done()
 		var n int
-		LeftBuf := bufPool.Get().([]byte)
+		leftBufPtr := bufPool.Get().(*[]byte)
+		LeftBuf := *leftBufPtr
 		for {
 			if x := cap(LeftBuf); n == x && x < maxBufferSize {
 				LeftBuf = make([]byte, x+minBufferSize)
@@ -95,11 +97,13 @@ func (fw *Forwarder) Tunnel() error {
 				break
 			}
 		}
-		bufPool.Put(LeftBuf)
+		*leftBufPtr = LeftBuf
+		bufPool.Put(leftBufPtr)
 	}()
 
 	var n int
-	RightBuf := bufPool.Get().([]byte)
+	rightBufPtr := bufPool.Get().(*[]byte)
+	RightBuf := *rightBufPtr
 	for {
 		if x := cap(RightBuf); n == x && x < maxBufferSize {
 			RightBuf = make([]byte, x+minBufferSize)
@@ -146,7 +150,8 @@ func (fw *Forwarder) Tunnel() error {
 			break
 		}
 	}
-	bufPool.Put(RightBuf)
+	*rightBufPtr = RightBuf
+	bufPool.Put(rightBufPtr)
 	wg.Wait()
 
 	_ = fw.RightConn.SetDeadline(time.Now())
