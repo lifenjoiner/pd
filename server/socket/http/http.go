@@ -25,7 +25,7 @@ func (s *HttpServer) ServeHttp(c *bufconn.Conn) bool {
 	}
 
 	u := req.URL
-	if (u.Host == "") {
+	if u.Host == "" {
 		log.Printf("[http] Invalid request.")
 		return false
 	}
