@@ -95,7 +95,7 @@ func ParseRequest(rd *bufio.Reader) (req *Request, err error) {
 		req.DestHost = p.ReadIPv4(4)
 	} else {
 		_, i := p.ReadString4a(8)
-		req.DestHost, i = p.ReadString4a(i + 1)
+		req.DestHost, _ = p.ReadString4a(i + 1)
 	}
 	return
 }

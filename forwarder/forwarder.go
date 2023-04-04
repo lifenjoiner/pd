@@ -135,8 +135,6 @@ func (fw *Forwarder) Tunnel() error {
 					gotRightData = true
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
-				} else {
-					// Certificate fragmentation has been observed.
 				}
 			} else if TlsStage == TlsApplication {
 				gotRightData = true
