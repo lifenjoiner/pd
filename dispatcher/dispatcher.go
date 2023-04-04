@@ -184,7 +184,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 				}
 			} else if err == nil {
 				// ESTABLISHED
-				c.SetDeadline(time.Now())
+				_ = c.SetDeadline(time.Now())
 				c.Close()
 			}
 			goodConn.n--
@@ -231,7 +231,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 			return
 		} else {
 			c := cs.GetConn()
-			c.SetDeadline(time.Now())
+			_ = c.SetDeadline(time.Now())
 			c.Close()
 			err = errors.New("Proxy authentication is not implemented.")
 		}
@@ -245,7 +245,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Target())
-	client.SetDeadline(time.Now().Add(2 * d.Timeout))
+	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	c, err := d.DispatchIP()
 	if err == nil {
 		if req.Command() == "CONNECT" && req.GetRequest(client, client.R) != nil {
@@ -282,7 +282,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 func (d *Dispatcher) ServeProxied(req protocol.Requester) error {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Target())
-	client.SetDeadline(time.Now().Add(2 * d.Timeout))
+	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	if req.Command() == "CONNECT" && req.GetRequest(client, client.R) != nil {
 		log.Printf("[%v] %v %v <- %v <= TLS: no ClientHello, drop it.", d.ServerType, req.Command(), req.Target(), client.RemoteAddr())
 		return nil

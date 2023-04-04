@@ -43,7 +43,7 @@ func (s *TCPServer) ListenAndServe() {
 // Serve serves 1 client.
 func (s *TCPServer) Serve(c *bufconn.Conn) {
 	defer c.Close()
-	c.SetDeadline(time.Now().Add(2 * s.Config.UpstreamTimeout))
+	_ = c.SetDeadline(time.Now().Add(2 * s.Config.UpstreamTimeout))
 
 	data, err := c.R.Peek(1)
 	if err != nil {

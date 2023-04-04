@@ -29,7 +29,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	if u == nil {
 		u = ck.URL
 	}
-	conn.SetDeadline(time.Now().Add(ck.Timeout))
+	_ = conn.SetDeadline(time.Now().Add(ck.Timeout))
 	switch strings.ToLower(u.Scheme) {
 	case "https":
 		_, err = conn.Write([]byte("\x15\x03\x03\x00\x01\x00"))
@@ -65,7 +65,7 @@ func (ck *TargetChecker) Check() (err error) {
 	}
 	if err == nil {
 		conn := cs.GetConn()
-		conn.SetDeadline(time.Now().Add(ck.Timeout))
+		_ = conn.SetDeadline(time.Now().Add(ck.Timeout))
 		pu := ck.Proxied
 		if ck.Proxied != nil {
 			port := protocol.GetPort(pu)
@@ -79,7 +79,7 @@ func (ck *TargetChecker) Check() (err error) {
 			ck.Conn = conn
 			err = ck.Transfer()
 		}
-		conn.SetDeadline(time.Now())
+		_ = conn.SetDeadline(time.Now())
 		conn.Close()
 	}
 	return

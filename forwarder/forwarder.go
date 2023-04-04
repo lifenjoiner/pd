@@ -72,7 +72,7 @@ func (fw *Forwarder) Tunnel() error {
 			if x := cap(LeftBuf); n == x && x < maxBufferSize {
 				LeftBuf = make([]byte, x+minBufferSize)
 			}
-			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
+			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
 				if TlsStage == TlsHandshake && LeftBuf[0] == TlsApplication && n > 1 && LeftBuf[1] == 0x03 {
@@ -83,14 +83,14 @@ func (fw *Forwarder) Tunnel() error {
 					RightTimeout = RightTlsAlive
 				}
 				//log.Printf("[forwarder] %v --> %v Read: %v", fw.LeftAddr, fw.RightAddr, n)
-				fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
+				_ = fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 				_, RwErr = fw.RightConn.Write(LeftBuf[0:n])
 			}
 			if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
 				if isReset(LrErr) || isTimeout(LrErr) {
-					fw.RightConn.SetDeadline(time.Now())
+					_ = fw.RightConn.SetDeadline(time.Now())
 				}
-				fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
+				_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 				//log.Printf("[forwarder] %v --> %v: %v", fw.LeftAddr, fw.RightAddr, LrErr)
 				break
 			}
@@ -104,7 +104,7 @@ func (fw *Forwarder) Tunnel() error {
 		if x := cap(RightBuf); n == x && x < maxBufferSize {
 			RightBuf = make([]byte, x+minBufferSize)
 		}
-		fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
+		_ = fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
 		if RrErr == nil {
 			// RightBuf has enough space.
@@ -137,11 +137,11 @@ func (fw *Forwarder) Tunnel() error {
 			} else if TlsStage == TlsApplication {
 				gotRightData = true
 			}
-			fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
+			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			_, LwErr = fw.LeftConn.Write(RightBuf[0:n])
 		}
 		if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
-			fw.LeftConn.SetDeadline(time.Now())
+			_ = fw.LeftConn.SetDeadline(time.Now())
 			//log.Printf("[forwarder] %v <-- %v: %v", fw.LeftAddr, fw.RightAddr, RrErr)
 			break
 		}
@@ -149,8 +149,8 @@ func (fw *Forwarder) Tunnel() error {
 	bufPool.Put(RightBuf)
 	wg.Wait()
 
-	fw.RightConn.SetDeadline(time.Now())
-	fw.LeftConn.SetDeadline(time.Now())
+	_ = fw.RightConn.SetDeadline(time.Now())
+	_ = fw.LeftConn.SetDeadline(time.Now())
 	ok := gotRightData || isReset(LrErr) || isEOF(LrErr)
 	//log.Print(LrErr)
 	//log.Print(LwErr)
