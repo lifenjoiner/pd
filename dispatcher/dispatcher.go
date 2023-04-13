@@ -61,21 +61,24 @@ func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispat
 
 // The main dispatcher, that dispatches how a client connection will be served.
 func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
-	d.maxProxyTry = 3
-	strategy := d.DispatchByStaticRules()
-	switch strategy {
-	case statichost.StaticDirect:
-		d.maxTry = 3
-		d.maxProxyTry = 0
-	case statichost.StaticBlocked:
-		d.maxTry = 0
-	default:
-		d.DispatchByStats()
-	}
-
+	var strategy statichost.Strategy
 	if NotInternetHost(d.DestHost) {
 		log.Printf("[dispatcher] %v isn't Internet host, won't go proxied.", d.DestHost)
+		strategy = statichost.StaticDirect
+		d.maxTry = 3
 		d.maxProxyTry = 0
+	} else {
+		d.maxProxyTry = 3
+		strategy = d.DispatchByStaticRules()
+		switch strategy {
+		case statichost.StaticDirect:
+			d.maxTry = 3
+			d.maxProxyTry = 0
+		case statichost.StaticBlocked:
+			d.maxTry = 0
+		default:
+			d.DispatchByStats()
+		}
 	}
 
 	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Target() + " <- " + d.Client.RemoteAddr().String()
@@ -102,7 +105,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 
 	b := true
 	if d.maxTry == 0 {
-		log.Printf("%v <= no proxy, try direct", logPre)
+		log.Printf("%v <= no proxy succeeded, try direct", logPre)
 		d.maxTry = 1
 		v := 1.0
 		if d.ServeDirect(req) != nil {
