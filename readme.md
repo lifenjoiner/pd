@@ -32,11 +32,13 @@ Try `pd -h`.
 # Exact match.
 www.google.com
 
-## domain match: from right to left, `.` as separator, no `*`, no separator.
+## domain match: from right to left, `.` as separator, no `*`, no separator, leading `=` means exact match.
 # All `.cn` sites.
 cn  # *.cn
 # *.wikipedia.org
 wikipedia.org
+# exactly `gitlab.com` without any of `*.gitlab.com`
+=gitlab.com
 
 ## ip range match: from left to right. `.` for ipv4, `:` for ipv6 as separator. Separator and `*` are required.
 # 10.0.0.0-10.255.255.255

@@ -14,7 +14,10 @@ func TestGetHostStrategy(t *testing.T) {
 	log.Printf("StaticDirect: %v", StaticDirect)
 	log.Printf("StaticBlocked: %v", StaticBlocked)
 
-	list := "golang.org	 # cover sub-domains\ncn.github.com"
+	list := `golang.org	 # cover sub-domains
+api.github.com
+=gitlab.com
+`
 
 	sd := StaticHosts{}
 	sd.Upsert(list, StaticDirect)
@@ -23,15 +26,33 @@ func TestGetHostStrategy(t *testing.T) {
 
 	var n Strategy
 
+	n = sd.GetStrategy("play.golang.org")
+	log.Printf("play.golang.org: %v", n)
+	if n != StaticDirect {
+		t.Fail()
+	}
+
+	n = sd.GetStrategy("api.github.com")
+	log.Printf("api.github.com: %v", n)
+	if n != StaticDirect {
+		t.Fail()
+	}
+
 	n = sd.GetStrategy("github.com")
 	log.Printf("github.com: %v", n)
 	if n != StaticNil {
 		t.Fail()
 	}
 
-	n = sd.GetStrategy("play.golang.org")
-	log.Printf("play.golang.org: %v", n)
+	n = sd.GetStrategy("gitlab.com")
+	log.Printf("gitlab.com: %v", n)
 	if n != StaticDirect {
+		t.Fail()
+	}
+
+	n = sd.GetStrategy("about.gitlab.com")
+	log.Printf("about.gitlab.com: %v", n)
+	if n != StaticNil {
 		t.Fail()
 	}
 

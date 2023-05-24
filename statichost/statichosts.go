@@ -59,7 +59,8 @@ func (sh StaticHosts) GetHostStrategy(host string) Strategy {
 			return dv
 		}
 	}
-	return StaticNil
+	// exact match: cover non-WWW trends
+	return sh["="+host]
 }
 
 // Get the strategy of an ip. Left to right.
