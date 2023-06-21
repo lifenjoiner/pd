@@ -64,7 +64,7 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (err error) {
+func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (restart bool, err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if seg {
@@ -73,7 +73,7 @@ func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (err error) {
 		_, err = fw.RightConn.Write(r.RequestData)
 	}
 	if err == nil {
-		err = fw.Tunnel()
+		restart, err = fw.Tunnel()
 	}
 	return
 }

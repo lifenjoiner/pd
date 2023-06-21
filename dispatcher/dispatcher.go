@@ -84,22 +84,33 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Target() + " <- " + d.Client.RemoteAddr().String()
 	log.Printf("%v [type:%v]", logPre, strategy)
 
+	var restart bool
+	var err error
 	h := d.DestHost + ":" + d.DestPort
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
-		if d.ServeDirect(req) == nil {
+		restart, err = d.ServeDirect(req)
+		if err == nil {
 			if strategy == statichost.StaticNil {
 				GlobalHostStats.Update(h, 1)
 			}
 			return true
+		} else if restart {
+			break
 		}
 	}
 	if globalOnline && d.tried > 0 && strategy == statichost.StaticNil {
 		GlobalHostStats.Update(h, 0)
 	}
+	if restart {
+		return false
+	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
-		if d.ServeProxied(req) == nil {
+		restart, err = d.ServeProxied(req)
+		if err == nil {
 			return true
+		} else if restart {
+			return false
 		}
 	}
 
@@ -108,7 +119,8 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		log.Printf("%v <= no proxy succeeded, try direct", logPre)
 		d.maxTry = 1
 		v := 1.0
-		if d.ServeDirect(req) != nil {
+		_, err := d.ServeDirect(req)
+		if err != nil {
 			v = 0
 			b = false
 		}
@@ -245,15 +257,19 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 }
 
 // Serve the client by direct connecting to the server.
-func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
+func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Target())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
+	restart := false
 	c, err := d.DispatchIP()
 	if err == nil {
-		if req.Command() == "CONNECT" && req.GetRequest(client, client.R) != nil {
-			log.Printf("[%v] %v %v <- %v <= TLS: no ClientHello, drop it.", d.ServerType, req.Command(), req.Target(), client.RemoteAddr())
-			return nil
+		if req.Command() == "CONNECT" {
+			err = req.GetRequest(client, client.R)
+			if err != nil {
+				log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
+				return true, err
+			}
 		}
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), c.RemoteAddr())
 		fw := &forwarder.Forwarder{
@@ -263,7 +279,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 			RightConn: c,
 			Timeout:   d.Timeout,
 		}
-		err = req.Request(fw, d.tried == 1)
+		restart, err = req.Request(fw, d.tried == 1)
 		c.Close()
 	} else if IsDnsErr(err) {
 		// Trust the specified DNS.
@@ -277,18 +293,22 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) error {
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
 	}
-	return err
+	return restart, err
 }
 
 // Serve the client by proxy.
-func (d *Dispatcher) ServeProxied(req protocol.Requester) error {
+func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Target())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
-	if req.Command() == "CONNECT" && req.GetRequest(client, client.R) != nil {
-		log.Printf("[%v] %v %v <- %v <= TLS: no ClientHello, drop it.", d.ServerType, req.Command(), req.Target(), client.RemoteAddr())
-		return nil
+	if req.Command() == "CONNECT" {
+		err := req.GetRequest(client, client.R)
+		if err != nil {
+			log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
+			return true, err
+		}
 	}
+	restart := false
 	conn, p, err := d.DispatchProxy()
 	if err == nil {
 		c := conn.GetConn()
@@ -302,14 +322,14 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) error {
 				RightConn: c,
 				Timeout:   d.Timeout,
 			}
-			err = req.Request(fw, false)
+			restart, err = req.Request(fw, false)
 		}
 		c.Close()
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
 	}
-	return err
+	return restart, err
 }
 
 func NotInternetHost(h string) bool {

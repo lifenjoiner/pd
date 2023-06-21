@@ -52,7 +52,7 @@ const (
 	TlsApplication  byte = 0x17
 )
 
-func (fw *Forwarder) Tunnel() error {
+func (fw *Forwarder) Tunnel() (bool, error) {
 	var wg sync.WaitGroup
 	var LrErr, LwErr, RrErr, RwErr error
 
@@ -61,7 +61,7 @@ func (fw *Forwarder) Tunnel() error {
 	// Persisting is good for reuse to send without re-Handshake (SNI).
 	LeftTlsAlive := 20 * fw.Timeout
 	RightTlsAlive := LeftTlsAlive + fw.Timeout
-	TlsStage := byte(0)
+	TlsStageRight := byte(0)
 	gotRightData := false
 
 	wg.Add(1)
@@ -77,10 +77,9 @@ func (fw *Forwarder) Tunnel() error {
 			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
-				if TlsStage == TlsHandshake && LeftBuf[0] == TlsApplication && n > 1 && LeftBuf[1] == 0x03 {
+				if TlsStageRight == TlsHandshake && LeftBuf[0] == TlsApplication && n > 1 && LeftBuf[1] == 0x03 {
 					// Request data is sent. Some server may response slowly: snapshot downloading from https://repo.or.cz
 					//log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
-					TlsStage = TlsApplication
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
 				}
@@ -112,8 +111,8 @@ func (fw *Forwarder) Tunnel() error {
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
 		if RrErr == nil {
 			// RightBuf has enough space.
-			if TlsStage == 0x00 {
-				TlsStage = RightBuf[0]
+			if TlsStageRight == 0x00 {
+				TlsStageRight = RightBuf[0]
 				if RightBuf[0] == TlsHandshake && n > 1 && RightBuf[1] == 0x03 {
 					// Tls v1.2, a: ServerHello + Certificate + ServerKeyExchange + ServerHelloDone
 					// Tls v1.2, b: ServerHello + ChangeCipherSpec + EncryptedHandshakeMessage
@@ -122,7 +121,7 @@ func (fw *Forwarder) Tunnel() error {
 				} else {
 					gotRightData = true
 				}
-			} else if TlsStage == TlsHandshake {
+			} else if TlsStageRight == TlsHandshake {
 				if (RightBuf[0] == TlsHandshake || RightBuf[0] == TlsChangeCipher) && n > 1 && RightBuf[1] == 0x03 {
 					// Tls v1.2, a: [NewSessionTicket + ]ChangeCipherSpec + EncryptedHandshakeMessage
 					// Weixin server sleeps (25s) before sending application data for heartbeats.
@@ -131,13 +130,11 @@ func (fw *Forwarder) Tunnel() error {
 				} else if RightBuf[0] == TlsApplication && n > 1 && RightBuf[1] == 0x03 {
 					// Response data is received.
 					//log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
-					TlsStage = TlsApplication
+					TlsStageRight = TlsApplication
 					gotRightData = true
 					LeftTimeout = LeftTlsAlive
 					RightTimeout = RightTlsAlive
 				}
-			} else if TlsStage == TlsApplication {
-				gotRightData = true
 			}
 			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			_, LwErr = fw.LeftConn.Write(RightBuf[0:n])
@@ -161,8 +158,9 @@ func (fw *Forwarder) Tunnel() error {
 	//log.Print(RwErr)
 	//log.Print(ok)
 	if ok {
-		return nil
+		return false, nil
 	} else {
-		return RrErr
+		restart := TlsStageRight == TlsHandshake || TlsStageRight == TlsApplication
+		return restart, RrErr
 	}
 }
