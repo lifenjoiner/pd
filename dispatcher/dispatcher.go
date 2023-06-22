@@ -261,16 +261,16 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Target())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
+	if req.Command() == "CONNECT" {
+		err := req.GetRequest(client, client.R)
+		if err != nil {
+			log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
+			return true, err
+		}
+	}
 	restart := false
 	c, err := d.DispatchIP()
 	if err == nil {
-		if req.Command() == "CONNECT" {
-			err = req.GetRequest(client, client.R)
-			if err != nil {
-				log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
-				return true, err
-			}
-		}
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), c.RemoteAddr())
 		fw := &forwarder.Forwarder{
 			LeftAddr:  client.RemoteAddr(),
