@@ -45,7 +45,6 @@ type Dispatcher struct {
 	tried       int
 	maxProxyTry int
 	proxyTried  int
-	responsed   bool
 }
 
 // The Dispatcher constructor.
@@ -288,7 +287,6 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		// Disabled domain error: no such host
 		// Host mapping `127.0.0.1` or `::1` is valid!
 		_, err = client.Write([]byte("HTTP/1.1 569 DNS Orz\r\n\r\n"))
-		d.responsed = true
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
