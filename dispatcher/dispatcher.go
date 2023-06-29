@@ -85,23 +85,26 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 
 	var restart bool
 	var err error
+	ok := false
+	v := 0.0
 	h := d.DestHost + ":" + d.DestPort
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
 		restart, err = d.ServeDirect(req)
 		if err == nil {
-			if strategy == statichost.StaticNil {
-				GlobalHostStats.Update(h, 1)
-			}
-			return true
+			ok = true
+			v = 1.0
+			break
 		} else if restart {
+			// failed after the 2nd client packet has been sent following ServerHello
 			break
 		}
+		// dialing or receiving ServerHello failed
 	}
-	if globalOnline && d.tried > 0 && strategy == statichost.StaticNil {
-		GlobalHostStats.Update(h, 0)
+	if globalOnline && d.maxTry > 0 && strategy == statichost.StaticNil {
+		GlobalHostStats.Update(h, v)
 	}
-	if restart {
-		return false
+	if ok || restart {
+		return ok
 	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
@@ -113,21 +116,21 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		}
 	}
 
-	b := true
+	ok = false
 	if d.maxTry == 0 {
 		log.Printf("%v <= no proxy succeeded, try direct", logPre)
 		d.maxTry = 1
-		v := 1.0
-		_, err := d.ServeDirect(req)
-		if err != nil {
-			v = 0
-			b = false
+		v = 0.0
+		_, err = d.ServeDirect(req)
+		if err == nil {
+			v = 1.0
+			ok = true
 		}
 		if globalOnline && strategy == statichost.StaticNil {
 			GlobalHostStats.Update(h, v)
 		}
 	}
-	return b
+	return ok
 }
 
 // Decide whether the host is aways go direct or proxied.
