@@ -189,8 +189,9 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 
 	var goodConn goodConn
 	goodConn.n = len(IPs)
-	for _, IP := range IPs {
-		go func(ip string) {
+	for i := 0; i < goodConn.n; i++ {
+		ip := IPs[i]
+		go func() {
 			c, err := net.DialTimeout("tcp", net.JoinHostPort(ip, d.DestPort), d.Timeout)
 			goodConn.Lock()
 			if goodConn.c == nil {
@@ -206,7 +207,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 			}
 			goodConn.n--
 			goodConn.Unlock()
-		}(IP)
+		}()
 	}
 
 	var conn *bufconn.Conn

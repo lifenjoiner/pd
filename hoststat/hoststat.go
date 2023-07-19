@@ -90,8 +90,7 @@ func (hs *HostStats) Cleanup() {
 	stats := hs.Stats
 	var changed bool
 	newStats := make(map[string]*HostStat)
-	for h := range stats {
-		stat := stats[h]
+	for h, stat := range stats {
 		if hs.Validity > 0 && time.Since(stat.Time) > hs.Validity {
 			changed = true
 		} else {

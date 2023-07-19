@@ -53,8 +53,7 @@ func NewProxy(s string) (*Proxy, error) {
 
 func NewProxies(urls []string) []*Proxy {
 	var proxies []*Proxy
-	for i := 0; i < len(urls); i++ {
-		s := urls[i]
+	for _, s := range urls {
 		if len(s) == 0 {
 			continue
 		}
@@ -90,28 +89,29 @@ func (pp *ProxyPool) GetProxy(i int) (p Proxy) {
 
 // Update and sort the EWMA of proxies in the pool.
 func (pp *ProxyPool) Update() {
-	pp.RLock()
 	N := len(pp.Proxies)
-	p := make([]*Proxy, N)
-	copy(p, pp.Proxies) // Both are slice!
-	pp.RUnlock()
 	if N <= 0 {
 		return
 	}
 
+	pp.RLock()
+	proxies := make([]*Proxy, N)
+	copy(proxies, pp.Proxies) // Both are slice!
+	pp.RUnlock()
+
 	var wg sync.WaitGroup
 	wg.Add(N)
 	for i := 0; i < N; i++ {
-		proxy := p[i]
+		p := proxies[i]
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
 			// Dial -> Handshake -> Transfer
 			d := 3 * pp.Timeout
-			if proxy.Check(pp.ProxyProbeURL, pp.Timeout) == nil {
+			if p.Check(pp.ProxyProbeURL, pp.Timeout) == nil {
 				d = time.Since(startTime)
 			}
-			proxy.Ewma.Add(float64(d))
+			p.Ewma.Add(float64(d))
 		}()
 	}
 	wg.Wait()
@@ -121,71 +121,68 @@ func (pp *ProxyPool) Update() {
 		return pp.Proxies[i].Ewma.Value() < pp.Proxies[j].Ewma.Value()
 	})
 	log.Printf("[ProxyPool] Sorted latencies:")
-	for i := 0; i < N; i++ {
-		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(pp.Proxies[i].Ewma.Value()), pp.Proxies[i].URL.Scheme, pp.Proxies[i].URL.Host)
+	for _, p := range pp.Proxies {
+		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(p.Ewma.Value()), p.URL.Scheme, p.URL.Host)
 	}
 	pp.Unlock()
 }
 
 // Initialize a ProxyPool from configured URLs.
-func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*ProxyPool) {
+func InitProxyPool(urls string, test string, timeout time.Duration) (pp map[string]*ProxyPool) {
 	pp = make(map[string]*ProxyPool)
-	sl := strings.Split(urls, ",")
+
 	ut, err := url.Parse(test)
 	if err != nil {
 		log.Printf("[ProxyPool] %v", err)
 		return
 	}
 
-	proxies := NewProxies(sl)
-	N := len(proxies)
-	if N == 0 {
+	proxies := NewProxies(strings.Split(urls, ","))
+	if len(proxies) <= 0 {
 		log.Printf("[ProxyPool] no proxy")
 		return
 	}
 
 	allowedSchemes := [3]string{"http", "socks5", "socks4a"}
-	for i := 0; i < N; i++ {
-		proxies[i].URL.Scheme = strings.ToLower(proxies[i].URL.Scheme)
-		s := proxies[i].URL.Scheme
+	for _, p := range proxies {
+		p.URL.Scheme = strings.ToLower(p.URL.Scheme)
+		s := p.URL.Scheme
 		switch s {
 		case "http", "socks5", "socks4a":
 			if pp[s] == nil {
 				pp[s] = &ProxyPool{}
 			}
 			pp[s].Lock()
-			pp[s].Proxies = append(pp[s].Proxies, proxies[i])
+			pp[s].Proxies = append(pp[s].Proxies, p)
 			pp[s].Unlock()
 		case "":
-			for j := 0; j < len(allowedSchemes); j++ {
-				scheme := allowedSchemes[j]
-				p := proxies[i]
-				ph := p.Dup()
-				ph.URL.Scheme = scheme
-				if pp[scheme] == nil {
-					pp[scheme] = &ProxyPool{}
+			for _, ss := range allowedSchemes {
+				pe := p.Dup()
+				pe.URL.Scheme = ss
+				if pp[ss] == nil {
+					pp[ss] = &ProxyPool{}
 				}
-				pp[scheme].Lock()
-				pp[scheme].Proxies = append(pp[scheme].Proxies, ph)
-				pp[scheme].Unlock()
+				pp[ss].Lock()
+				pp[ss].Proxies = append(pp[ss].Proxies, pe)
+				pp[ss].Unlock()
 			}
 		default:
-			log.Printf("[ProxyPool] unsupported proxy: %v", proxies[i].url)
+			log.Printf("[ProxyPool] unsupported proxy: %v", p.url)
 		}
 	}
-	for j := 0; j < len(allowedSchemes); j++ {
-		scheme := allowedSchemes[j]
-		if pp[scheme] == nil {
+	for i := 0; i < len(allowedSchemes); i++ {
+		s := allowedSchemes[i]
+		if pp[s] == nil {
 			continue
 		}
-		pp[scheme].Lock()
-		pp[scheme].ProxyProbeURL = ut
-		pp[scheme].Timeout = d
-		pp[scheme].Unlock()
+		pp[s].Lock()
+		pp[s].ProxyProbeURL = ut
+		pp[s].Timeout = timeout
+		pp[s].Unlock()
 		go func() {
 			for {
-				log.Printf("[ProxyPool] %v updating ...", scheme)
-				pp[scheme].Update()
+				log.Printf("[ProxyPool] %v updating ...", s)
+				pp[s].Update()
 				time.Sleep(updateInterval)
 			}
 		}()
