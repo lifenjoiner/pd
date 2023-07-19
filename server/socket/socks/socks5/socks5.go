@@ -15,10 +15,10 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
-type Socks5Server server.Server
+type Server server.Server
 
-// Serve 1 client.
-func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) bool {
+// Serve serves 1 client.
+func (s *Server) Serve(c *bufconn.Conn) bool {
 	logPre := "[socks5] " + c.RemoteAddr().String()
 
 	err := socks5.Authorize(c, c.R)
@@ -35,7 +35,9 @@ func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) bool {
 	var msg string
 	switch req.Cmd {
 	case socks.CONNECT:
-		return s.ServeConnect(c, req)
+		dp := dispatcher.New("socks5", c, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
+		dp.ParallelDial = s.Config.ParallelDial
+		return dp.Dispatch(req)
 	case socks.BIND:
 		msg = "unimplemented BIND"
 	case socks.UDPASSOCIATE:
@@ -45,10 +47,4 @@ func (s *Socks5Server) ServeSocks5(c *bufconn.Conn) bool {
 	}
 	log.Printf("%v <= %v", logPre, msg)
 	return false
-}
-
-func (s *Socks5Server) ServeConnect(client *bufconn.Conn, req *socks5.Request) bool {
-	dp := dispatcher.New("socks5", client, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
-	dp.ParallelDial = s.Config.ParallelDial
-	return dp.Dispatch(req)
 }

@@ -24,22 +24,18 @@ const updateInterval time.Duration = 3 * time.Minute
 type Proxy struct {
 	Ewma *ewma.EWMA
 	URL  *url.URL
-	Url  string
+	url  string
 }
 
 func (p *Proxy) Dup() *Proxy {
 	e := *p.Ewma
 	u := *p.URL
-	s := p.Url
+	s := p.url
 	return &Proxy{&e, &u, s}
 }
 
-func (p *Proxy) Dial(d time.Duration) error {
-	return nil
-}
-
-func (p *Proxy) Check(target *url.URL, d time.Duration) error {
-	ck := checker.NewTargetChecker(p.URL, d, nil, target)
+func (p *Proxy) Check(target *url.URL, timeout time.Duration) error {
+	ck := checker.NewTargetChecker(p.URL, timeout, nil, target)
 	return ck.Check()
 }
 
@@ -51,7 +47,7 @@ func NewProxy(s string) (*Proxy, error) {
 	return &Proxy{
 		Ewma: ewma.NewMovingAverage(ewmaSlide),
 		URL:  u,
-		Url:  s,
+		url:  s,
 	}, nil
 }
 
@@ -77,7 +73,7 @@ type ProxyPool struct {
 	sync.RWMutex
 	Proxies       []*Proxy
 	Checker       string
-	ProxyProbeUrl *url.URL
+	ProxyProbeURL *url.URL
 	Timeout       time.Duration
 }
 
@@ -112,7 +108,7 @@ func (pp *ProxyPool) Update() {
 			startTime := time.Now()
 			// Dial -> Handshake -> Transfer
 			d := 3 * pp.Timeout
-			if proxy.Check(pp.ProxyProbeUrl, pp.Timeout) == nil {
+			if proxy.Check(pp.ProxyProbeURL, pp.Timeout) == nil {
 				d = time.Since(startTime)
 			}
 			proxy.Ewma.Add(float64(d))
@@ -134,14 +130,14 @@ func (pp *ProxyPool) Update() {
 // Initialize a ProxyPool from configured URLs.
 func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*ProxyPool) {
 	pp = make(map[string]*ProxyPool)
-	Url := strings.Split(urls, ",")
+	sl := strings.Split(urls, ",")
 	ut, err := url.Parse(test)
 	if err != nil {
 		log.Printf("[ProxyPool] %v", err)
 		return
 	}
 
-	proxies := NewProxies(Url)
+	proxies := NewProxies(sl)
 	N := len(proxies)
 	if N == 0 {
 		log.Printf("[ProxyPool] no proxy")
@@ -174,7 +170,7 @@ func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*Pr
 				pp[scheme].Unlock()
 			}
 		default:
-			log.Printf("[ProxyPool] unsupported proxy: %v", proxies[i].Url)
+			log.Printf("[ProxyPool] unsupported proxy: %v", proxies[i].url)
 		}
 	}
 	for j := 0; j < len(allowedSchemes); j++ {
@@ -183,7 +179,7 @@ func InitProxyPool(urls string, test string, d time.Duration) (pp map[string]*Pr
 			continue
 		}
 		pp[scheme].Lock()
-		pp[scheme].ProxyProbeUrl = ut
+		pp[scheme].ProxyProbeURL = ut
 		pp[scheme].Timeout = d
 		pp[scheme].Unlock()
 		go func() {

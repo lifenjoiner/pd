@@ -238,7 +238,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 	if proxy.URL != nil {
 		switch d.ServerType {
 		case "http":
-			cs, err = bufconn.DialHttp(proxy.URL, ProxyPool.Timeout)
+			cs, err = bufconn.DialHTTP(proxy.URL, ProxyPool.Timeout)
 		case "socks5":
 			cs, err = bufconn.DialSocks5(proxy.URL, ProxyPool.Timeout)
 		case "socks4a":
@@ -343,9 +343,9 @@ func NotInternetHost(h string) bool {
 }
 
 // Check if we are online.
-func StartProbeDirect(Url string, d time.Duration) {
+func StartProbeDirect(url string, d time.Duration) {
 	globalOnline = true
-	ck, err := checker.New(Url, d, "")
+	ck, err := checker.New(url, d, "")
 	if err == nil {
 		go func() {
 			for {

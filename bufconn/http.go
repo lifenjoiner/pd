@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-type HttpConn Conn
+type HTTPConn Conn
 
-func (c *HttpConn) bondData(m, h, p string) ([]byte, error) {
+func (c *HTTPConn) bondData(m, h, p string) ([]byte, error) {
 	switch strings.ToUpper(m) {
 	case "CONNECT":
 	default:
@@ -26,7 +26,7 @@ func (c *HttpConn) bondData(m, h, p string) ([]byte, error) {
 	return data, nil
 }
 
-func (c *HttpConn) Bond(m, h, p string, b []byte) (err error) {
+func (c *HTTPConn) Bond(m, h, p string, b []byte) (err error) {
 	if len(b) == 0 {
 		b, err = c.bondData(m, h, p)
 	}
@@ -48,15 +48,15 @@ func (c *HttpConn) Bond(m, h, p string, b []byte) (err error) {
 	return err
 }
 
-func (c *HttpConn) GetConn() *Conn {
+func (c *HTTPConn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewHttpConn(c *Conn) *HttpConn {
-	return (*HttpConn)(c)
+func NewHTTPConn(c *Conn) *HTTPConn {
+	return (*HTTPConn)(c)
 }
 
-func DialHttp(u *url.URL, d time.Duration) (*HttpConn, error) {
+func DialHTTP(u *url.URL, d time.Duration) (*HTTPConn, error) {
 	c, err := DialURL(u, d)
-	return (*HttpConn)(c), err
+	return (*HTTPConn)(c), err
 }

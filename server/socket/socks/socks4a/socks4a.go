@@ -15,10 +15,10 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
-type Socks4aServer server.Server
+type Server server.Server
 
-// Serve 1 client.
-func (s *Socks4aServer) ServeSocks4a(c *bufconn.Conn) bool {
+// Serve serves 1 client.
+func (s *Server) Serve(c *bufconn.Conn) bool {
 	logPre := "[socks4a] " + c.RemoteAddr().String()
 
 	req, err := socks4a.ParseRequest(c.R)
@@ -30,7 +30,9 @@ func (s *Socks4aServer) ServeSocks4a(c *bufconn.Conn) bool {
 	var msg string
 	switch req.Cmd {
 	case socks.CONNECT:
-		return s.ServeConnect(c, req)
+		dp := dispatcher.New("socks4a", c, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
+		dp.ParallelDial = s.Config.ParallelDial
+		return dp.Dispatch(req)
 	case socks.BIND:
 		msg = "unimplemented BIND"
 	default:
@@ -38,10 +40,4 @@ func (s *Socks4aServer) ServeSocks4a(c *bufconn.Conn) bool {
 	}
 	log.Printf("%v <= %v", logPre, msg)
 	return false
-}
-
-func (s *Socks4aServer) ServeConnect(client *bufconn.Conn, req *socks4a.Request) bool {
-	dp := dispatcher.New("socks4a", client, req.DestHost, req.DestPort, s.Config.UpstreamTimeout)
-	dp.ParallelDial = s.Config.ParallelDial
-	return dp.Dispatch(req)
 }

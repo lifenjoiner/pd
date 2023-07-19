@@ -16,11 +16,11 @@ import (
 	"github.com/lifenjoiner/pd/server/socket/socks/socks5"
 )
 
-// TCPServer stores the socks/http proxy config.
-type TCPServer server.Server
+// Server stores the socks/http proxy config.
+type Server server.Server
 
 // ListenAndServe listens on the Addr and serves connections.
-func (s *TCPServer) ListenAndServe() {
+func (s *Server) ListenAndServe() {
 	l, err := net.Listen("tcp", s.Addr)
 	if err != nil {
 		log.Printf("[tcp] failed to listen on %s: %v\n", s.Addr, err)
@@ -41,7 +41,7 @@ func (s *TCPServer) ListenAndServe() {
 }
 
 // Serve serves 1 client.
-func (s *TCPServer) Serve(c *bufconn.Conn) {
+func (s *Server) Serve(c *bufconn.Conn) {
 	defer c.Close()
 	_ = c.SetDeadline(time.Now().Add(2 * s.Config.UpstreamTimeout))
 
@@ -52,13 +52,13 @@ func (s *TCPServer) Serve(c *bufconn.Conn) {
 	}
 	switch data[0] {
 	case 5:
-		socks5 := (*socks5.Socks5Server)(s)
-		socks5.ServeSocks5(c)
+		socks5 := (*socks5.Server)(s)
+		socks5.Serve(c)
 	case 4:
-		socks4a := (*socks4a.Socks4aServer)(s)
-		socks4a.ServeSocks4a(c)
+		socks4a := (*socks4a.Server)(s)
+		socks4a.Serve(c)
 	default:
-		http := (*http.HttpServer)(s)
-		http.ServeHttp(c)
+		http := (*http.Server)(s)
+		http.Serve(c)
 	}
 }

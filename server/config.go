@@ -12,5 +12,5 @@ type Config struct {
 	UpstreamTimeout time.Duration
 	ParallelDial    bool
 	Proxies         string
-	ProxyProbeUrl   string
+	ProxyProbeURL   string
 }

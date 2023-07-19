@@ -14,10 +14,10 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
-type HttpServer server.Server
+type Server server.Server
 
-// Serve 1 client.
-func (s *HttpServer) ServeHttp(c *bufconn.Conn) bool {
+// Serve serves 1 client.
+func (s *Server) Serve(c *bufconn.Conn) bool {
 	req, err := http.ParseRequest(c.R)
 	if err != nil {
 		log.Printf("[http] %v", err)

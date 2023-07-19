@@ -54,7 +54,7 @@ func (ck *TargetChecker) Check() (err error) {
 	var cs bufconn.ConnSolver
 	switch strings.ToLower(ck.URL.Scheme) {
 	case "http", "https":
-		cs, err = bufconn.DialHttp(ck.URL, ck.Timeout)
+		cs, err = bufconn.DialHTTP(ck.URL, ck.Timeout)
 	case "socks5":
 		cs, err = bufconn.DialSocks5(ck.URL, ck.Timeout)
 	case "socks4a":

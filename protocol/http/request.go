@@ -19,7 +19,7 @@ import (
 
 type Request struct {
 	Method    string
-	Url       string
+	url       string
 	Proto     string
 	Auth      string
 	PostData  []byte // to retry to defend RST
@@ -36,7 +36,7 @@ func (r *Request) Command() string {
 }
 
 func (r *Request) Target() string {
-	return r.Url
+	return r.url
 }
 
 func (r *Request) Host() string {
@@ -120,7 +120,7 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 
 	var ok bool
 	r = &Request{}
-	r.Method, r.Url, r.Proto, ok = parseStartLine(line)
+	r.Method, r.url, r.Proto, ok = parseStartLine(line)
 	if !ok {
 		return nil, errors.New("malformed HTTP start line")
 	}
@@ -131,11 +131,11 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 	}
 
 	// The net/rpc package also uses CONNECT.
-	rawUrl := r.Url
+	rawURL := r.url
 	if r.Method == "CONNECT" {
-		rawUrl = "//" + rawUrl
+		rawURL = "//" + rawURL
 	}
-	r.URL, err = url.Parse(rawUrl)
+	r.URL, err = url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}

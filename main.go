@@ -31,11 +31,11 @@ func ServeFromConfig(config *Config) {
 	dispatcher.GlobalHostStats = hoststat.MapStatsFile(config.StatFile, config.StatValidity)
 	dispatcher.StartProbeDirect(config.NetProbeURL, svrConf.UpstreamTimeout)
 	go func() {
-		dispatcher.GlobalProxyPool = proxypool.InitProxyPool(svrConf.Proxies, svrConf.ProxyProbeUrl, svrConf.UpstreamTimeout)
+		dispatcher.GlobalProxyPool = proxypool.InitProxyPool(svrConf.Proxies, svrConf.ProxyProbeURL, svrConf.UpstreamTimeout)
 	}()
 
 	for _, listen := range config.Listens {
-		s := &tcp.TCPServer{Addr: listen, Config: svrConf}
+		s := &tcp.Server{Addr: listen, Config: svrConf}
 		go s.ListenAndServe()
 	}
 }

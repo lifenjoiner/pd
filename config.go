@@ -31,7 +31,7 @@ func parseConfig() *Config {
 	flag.StringVar(&conf.NetProbeURL, "netprobeurl", "https://example.com", "Used to probe if we are offline, and to ignore offline failures.")
 	flag.BoolVar(&conf.SvrConf.ParallelDial, "paralleldial", true, "Try parallelly dial up IPs of a host.")
 	flag.StringVar(&conf.SvrConf.Proxies, "proxies", "", "Upstream proxy urls: [Scheme://]Host:Port[,[Scheme://]Host:Port][...], omitting scheme adopts all supported schemes (http, socks5, socks4a).")
-	flag.StringVar(&conf.SvrConf.ProxyProbeUrl, "proxyprobeurl", "https://www.google.com", "Used to probe if a proxy works.")
+	flag.StringVar(&conf.SvrConf.ProxyProbeURL, "proxyprobeurl", "https://www.google.com", "Used to probe if a proxy works.")
 	flag.DurationVar(&conf.StatValidity, "statvalidity", 24*time.Hour, "Validity of a stat.")
 	flag.StringVar(&conf.StatFile, "statfile", "stat.json", "File records direct connection quality (EWMA of the last 10).")
 	flag.StringVar(&conf.Blocked, "blocked", "blocked", "File of blocked domains (suffix) or IPs (prefix), that go proxied directly. Do 1 direct try, if no proxy.")
