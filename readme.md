@@ -66,7 +66,7 @@ wikipedia.org
 
 ## 统计 Vs 隐私
 
-`pd` 存储主机最近 24h（`-statvalidity` 的默认值） 的动态统计数据，包括 "host/IP:port"、最近 10 次连接的 EWMA、访问计数和时间。这是动态调度算法必需的。
+`pd` 存储主机最近 7 天（`-statvalidity` 的默认值） 的动态统计数据，包括 "host/IP:port"、最近 10 次连接的 EWMA、访问计数和时间。这是动态调度算法必需的。
 
 你可以用 `-statfile` 将结果保存为 `nul`。但是，这样就只能冷重启。
 
@@ -144,7 +144,7 @@ Sites/Pathes restricted (blocked) by the servers self are not detectable.
 
 ## Statistics Vs Privacy
 
-`pd` stores dynamic statistics of hosts for the last 24h (`-statvalidity` default), including "host/IP:port" pairs, EWMA of the last 10 connections, visit count, and the last visit time. It is required to implement the dynamic dispatching.
+`pd` stores dynamic statistics of hosts for the last 7d (`-statvalidity` default), including "host/IP:port" pairs, EWMA of the last 10 connections, visit count, and the last visit time. It is required to implement the dynamic dispatching.
 
 You can use `-statfile` to save them to `nul`. But that will lead to a cold restart.
 

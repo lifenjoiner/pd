@@ -32,7 +32,7 @@ func parseConfig() *Config {
 	flag.BoolVar(&conf.SvrConf.ParallelDial, "paralleldial", true, "Try parallelly dial up IPs of a host.")
 	flag.StringVar(&conf.SvrConf.Proxies, "proxies", "", "Upstream proxy urls: [Scheme://]Host:Port[,[Scheme://]Host:Port][...], omitting scheme adopts all supported schemes (http, socks5, socks4a).")
 	flag.StringVar(&conf.SvrConf.ProxyProbeURL, "proxyprobeurl", "https://www.google.com", "Used to probe if a proxy works.")
-	flag.DurationVar(&conf.StatValidity, "statvalidity", 24*time.Hour, "Validity of a stat.")
+	flag.DurationVar(&conf.StatValidity, "statvalidity", 168*time.Hour, "Validity of a stat.")
 	flag.StringVar(&conf.StatFile, "statfile", "stat.json", "File records direct connection quality (EWMA of the last 10).")
 	flag.StringVar(&conf.Blocked, "blocked", "blocked", "File of blocked domains (suffix) or IPs (prefix), that go proxied directly. Do 1 direct try, if no proxy.")
 	flag.StringVar(&conf.Direct, "direct", "direct", "File of direct domains (suffix) or IPs (prefix), that won't go proxied. Direct > Blocked.")
