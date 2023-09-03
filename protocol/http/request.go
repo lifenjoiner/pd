@@ -145,10 +145,21 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 	return
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 // https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
 func cleanHeaders(header textproto.MIMEHeader) {
-	header.Del("Proxy-Connection")
-	header.Del("Proxy-Authenticate")
-	header.Del("Proxy-Authorization")
+	hopByHopHeaders := []string{
+		"Connection",
+		"Keep-Alive",
+		"Proxy-Connection", // Implemented as a misunderstanding of the HTTP specifications
+		"Proxy-Authenticate",
+		"Proxy-Authorization",
+		"TE",
+		"Trailer",
+		"Transfer-Encoding",
+		"Upgrade",
+	}
+	for _, h := range hopByHopHeaders {
+		header.Del(h)
+	}
 }
