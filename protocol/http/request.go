@@ -96,18 +96,31 @@ func (r *Request) cacheTlsData(rd *bufio.Reader) (err error) {
 }
 
 func (r *Request) writeRequest(w io.Writer) (err error) {
-	var r2 *Request = &Request{}
-	*r2 = *r
-	cleanHeaders(r2.Header)
-	// Does not support http keep-alive.
-	r2.Header.Set("Connection", "close")
+	// NTLMSSP automatic logon requires `Keep-Alive`.
+	nc := false
+	cv := r.Header.Get("Connection")
+	if cv == "" {
+		// Windows set `Proxy-Connection` rather than `Connection`.
+		nc = true
+		cv = r.Header.Get("Proxy-Connection")
+	}
+	if cv == "" {
+		cv = "close"
+	}
+
+	cleanHeaders(r.Header)
+
+	if nc {
+		r.Header.Set("Connection", cv)
+	}
 	// Proxy Authorization: LAN proxy doesn't need, in WAN it is BLOCKED!
-	r2.Header.Set("Host", r.URL.Host)
-	err = writeStartLine(w, r2.Method, r2.URL.RequestURI(), r2.Proto)
+	r.Header.Set("Host", r.URL.Host)
+	err = writeStartLine(w, r.Method, r.URL.RequestURI(), r.Proto)
+
 	if err != nil {
 		return
 	}
-	err = writeHeaders(w, r2.Header)
+	err = writeHeaders(w, r.Header)
 	return
 }
 

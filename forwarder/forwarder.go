@@ -17,8 +17,10 @@ import (
 type Forwarder struct {
 	LeftAddr  net.Addr
 	LeftConn  *bufconn.Conn
+	LeftTran  Transformer
 	RightAddr net.Addr
 	RightConn *bufconn.Conn // TCP/UDP
+	RightTran Transformer
 	Timeout   time.Duration
 }
 
@@ -84,8 +86,15 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 					RightTimeout = RightTlsAlive
 				}
 				//log.Printf("[forwarder] %v --> %v Read: %v", fw.LeftAddr, fw.RightAddr, n)
+				data := LeftBuf[0:n]
+				if fw.LeftTran != nil {
+					d := fw.LeftTran.Transform(data)
+					if d != nil {
+						data = d
+					}
+				}
 				_ = fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
-				_, RwErr = fw.RightConn.Write(LeftBuf[0:n])
+				_, RwErr = fw.RightConn.Write(data)
 			}
 			if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
 				if isReset(LrErr) || isTimeout(LrErr) {
@@ -136,8 +145,15 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 					RightTimeout = RightTlsAlive
 				}
 			}
+			data := RightBuf[0:n]
+			if fw.RightTran != nil {
+				d := fw.RightTran.Transform(data)
+				if d != nil {
+					data = d
+				}
+			}
 			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
-			_, LwErr = fw.LeftConn.Write(RightBuf[0:n])
+			_, LwErr = fw.LeftConn.Write(data)
 		}
 		if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
 			_ = fw.LeftConn.SetDeadline(time.Now())

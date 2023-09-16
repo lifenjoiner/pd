@@ -18,6 +18,7 @@ import (
 	"github.com/lifenjoiner/pd/forwarder"
 	"github.com/lifenjoiner/pd/hoststat"
 	"github.com/lifenjoiner/pd/protocol"
+	"github.com/lifenjoiner/pd/protocol/http"
 	"github.com/lifenjoiner/pd/proxypool"
 	"github.com/lifenjoiner/pd/statichost"
 )
@@ -264,12 +265,15 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Host())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
+	var leftTran forwarder.Transformer
 	if req.Command() == "CONNECT" {
 		err := req.GetRequest(client, client.R)
 		if err != nil {
 			log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
 			return true, err
 		}
+	} else {
+		leftTran = &http.ReqestTransformer{}
 	}
 	restart := false
 	c, err := d.DispatchIP()
@@ -278,6 +282,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		fw := &forwarder.Forwarder{
 			LeftAddr:  client.RemoteAddr(),
 			LeftConn:  client,
+			LeftTran:  leftTran,
 			RightAddr: c.RemoteAddr(),
 			RightConn: c,
 			Timeout:   d.Timeout,
