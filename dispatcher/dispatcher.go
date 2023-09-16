@@ -80,7 +80,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		}
 	}
 
-	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Target() + " <- " + d.Client.RemoteAddr().String()
+	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Host() + " <- " + d.Client.RemoteAddr().String()
 	log.Printf("%v [type:%v]", logPre, strategy)
 
 	var restart bool
@@ -262,7 +262,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 // Serve the client by direct connecting to the server.
 func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
-	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Target())
+	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Host())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	if req.Command() == "CONNECT" {
 		err := req.GetRequest(client, client.R)
@@ -301,7 +301,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 // Serve the client by proxy.
 func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	client := d.Client
-	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Target())
+	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Host())
 	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	if req.Command() == "CONNECT" {
 		err := req.GetRequest(client, client.R)
