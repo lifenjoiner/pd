@@ -6,6 +6,7 @@ package http
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"net/textproto"
@@ -79,7 +80,15 @@ func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart boo
 			return false, nil
 		}
 	} else {
-		err = r.writeRequest(fw.RightConn, proxy)
+		if seg {
+			err = r.writeRequest(fw.RightConn, proxy)
+		} else {
+			bw := &bytes.Buffer{}
+			err = r.writeRequest(bw, proxy)
+			if err == nil {
+				_, err = fw.RightConn.Write(bw.Bytes())
+			}
+		}
 		if err == nil && len(r.PostData) > 0 {
 			_, err = fw.RightConn.Write(r.PostData)
 		}
