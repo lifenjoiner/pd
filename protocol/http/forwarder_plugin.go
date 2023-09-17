@@ -10,7 +10,9 @@ import (
 )
 
 // ReqestTransformer transforms http request for direct connections.
-type ReqestTransformer struct{}
+type ReqestTransformer struct {
+	Proxy bool
+}
 
 // Transform does the transformation.
 func (t ReqestTransformer) Transform(b []byte) []byte {
@@ -22,7 +24,7 @@ func (t ReqestTransformer) Transform(b []byte) []byte {
 	}
 
 	bw := &bytes.Buffer{}
-	err = req.writeRequest(bw)
+	err = req.writeRequest(bw, t.Proxy)
 	if err == nil && len(req.PostData) > 0 {
 		_, err = bw.Write(req.PostData)
 	}

@@ -287,7 +287,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 			RightConn: c,
 			Timeout:   d.Timeout,
 		}
-		restart, err = req.Request(fw, d.tried == 1)
+		restart, err = req.Request(fw, false, d.tried == 1)
 		c.Close()
 	} else if IsDnsErr(err) {
 		// Trust the specified DNS.
@@ -329,7 +329,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 				RightConn: c,
 				Timeout:   d.Timeout,
 			}
-			restart, err = req.Request(fw, false)
+			restart, err = req.Request(fw, true, false)
 		}
 		c.Close()
 	}

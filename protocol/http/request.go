@@ -64,7 +64,7 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (restart bool, err error) {
+func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if r.Method == "CONNECT" {
@@ -79,7 +79,7 @@ func (r *Request) Request(fw *forwarder.Forwarder, seg bool) (restart bool, err 
 			return false, nil
 		}
 	} else {
-		err = r.writeRequest(fw.RightConn)
+		err = r.writeRequest(fw.RightConn, proxy)
 		if err == nil && len(r.PostData) > 0 {
 			_, err = fw.RightConn.Write(r.PostData)
 		}
@@ -95,7 +95,7 @@ func (r *Request) cacheTlsData(rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) writeRequest(w io.Writer) (err error) {
+func (r *Request) writeRequest(w io.Writer, proxy bool) (err error) {
 	// NTLMSSP automatic logon requires `Keep-Alive`.
 	nc := false
 	cv := r.Header.Get("Connection")
@@ -115,8 +115,12 @@ func (r *Request) writeRequest(w io.Writer) (err error) {
 	}
 	// Proxy Authorization: LAN proxy doesn't need, in WAN it is BLOCKED!
 	r.Header.Set("Host", r.URL.Host)
-	err = writeStartLine(w, r.Method, r.URL.RequestURI(), r.Proto)
 
+	path := r.URL.RequestURI()
+	if proxy {
+		path = r.url
+	}
+	err = writeStartLine(w, r.Method, path, r.Proto)
 	if err != nil {
 		return
 	}

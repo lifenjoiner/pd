@@ -19,5 +19,5 @@ type Requester interface {
 	Hostname() string
 	Port() string
 	GetRequest(w io.Writer, r *bufio.Reader) error
-	Request(fw *forwarder.Forwarder, seg bool) (restart bool, err error)
+	Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error)
 }
