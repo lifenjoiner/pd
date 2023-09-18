@@ -10,7 +10,19 @@
 
 ## 用法
 
-参 `pd -h`.
+详参 `pd -h`.
+
+例子：
+
+Windows 只服务本机
+```bat
+start pd.exe -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com
+```
+
+*nix 服务路由器下的局域网
+```sh
+pd -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com -listens=192.168.2.1:6699 -direct=/etc/pd/direct -blocked=/etc/pd/blocked -statfile=/tmp/stat.json
+```
 
 ## 支持
 * 静态规则：子域名优先。
@@ -25,6 +37,7 @@
 
 * 代理做身份验证。本地代理没必要。
 * 非公网 IP 或者非域名通信被传递到上游代理。
+* SOCKS BIND 和 UDP。
 
 ## 静态主机名匹配语法
 
@@ -88,7 +101,19 @@ https://github.com/lifenjoiner/pd
 
 ## Usage
 
-Try `pd -h`.
+Try `pd -h` for details.
+
+Examples:
+
+Windows serves only yourself
+```bat
+start pd.exe -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com
+```
+
+*nix serves for the LAN of a router
+```sh
+pd -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com -listens=192.168.2.1:6699 -direct=/etc/pd/direct -blocked=/etc/pd/blocked -statfile=/tmp/stat.json
+```
 
 ## Dos
 * Static rules: sub-domain first.
@@ -103,6 +128,7 @@ Try `pd -h`.
 
 * Proxy authentication. No need for local proxies.
 * Non-Global-Internet-IPs or Non-domain-hosts go to upstream proxies.
+* SOCKS BIND and UDP.
 
 ## Static Host Matching Syntax
 
