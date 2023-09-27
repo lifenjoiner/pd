@@ -22,6 +22,7 @@ type Forwarder struct {
 	RightConn *bufconn.Conn // TCP/UDP
 	RightTran Transformer
 	Timeout   time.Duration
+	Wave      float64
 }
 
 // The reading size, could > 4k, need big enough to get the whole Tls Handshake packets.
@@ -61,7 +62,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 	LeftTimeout := 2 * fw.Timeout
 	RightTimeout := fw.Timeout
 	// Persisting is good for reuse to send without re-Handshake (SNI).
-	LeftTlsAlive := 20 * fw.Timeout
+	LeftTlsAlive := time.Duration((1 + fw.Wave) * 10 * float64(fw.Timeout))
 	RightTlsAlive := LeftTlsAlive + fw.Timeout
 	TlsStageRight := byte(0)
 	gotRightData := false

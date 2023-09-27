@@ -44,6 +44,7 @@ type Dispatcher struct {
 	//local
 	maxTry      int
 	tried       int
+	directWave  float64
 	maxProxyTry int
 	proxyTried  int
 }
@@ -61,6 +62,8 @@ func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispat
 
 // The main dispatcher, that dispatches how a client connection will be served.
 func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
+	d.directWave = 1
+
 	var strategy statichost.Strategy
 	if NotInternetHost(d.DestHost) {
 		log.Printf("[dispatcher] %v isn't Internet host, won't go proxied.", d.DestHost)
@@ -143,7 +146,10 @@ func (d *Dispatcher) DispatchByStaticRules() statichost.Strategy {
 func (d *Dispatcher) DispatchByStats() {
 	h := d.DestHost + ":" + d.DestPort
 	stat := GlobalHostStats.GetStat(h)
-	if stat.Count == 0 || stat.Value > 0.8 {
+	if stat.Count == 0 {
+		stat.Value = 1
+	}
+	if stat.Value > 0.8 {
 		d.maxTry = 3
 	} else if stat.Value > 0.6 {
 		d.maxTry = 2
@@ -160,6 +166,7 @@ func (d *Dispatcher) DispatchByStats() {
 	} else {
 		d.maxTry = 0
 	}
+	d.directWave = stat.Value
 }
 
 // The helper struct for DispatchIP.
@@ -279,6 +286,10 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	c, err := d.DispatchIP()
 	if err == nil {
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), c.RemoteAddr())
+		wave := d.directWave
+		if d.maxTry > 1 && d.tried < 1 {
+			wave = 1.0
+		}
 		fw := &forwarder.Forwarder{
 			LeftAddr:  client.RemoteAddr(),
 			LeftConn:  client,
@@ -286,6 +297,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 			RightAddr: c.RemoteAddr(),
 			RightConn: c,
 			Timeout:   d.Timeout,
+			Wave:      wave,
 		}
 		restart, err = req.Request(fw, false, d.tried == 1)
 		c.Close()
@@ -328,6 +340,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 				RightAddr: c.RemoteAddr(),
 				RightConn: c,
 				Timeout:   d.Timeout,
+				Wave:      1,
 			}
 			restart, err = req.Request(fw, true, false)
 		}
