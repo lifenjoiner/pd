@@ -299,7 +299,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 			Timeout:   d.Timeout,
 			Wave:      wave,
 		}
-		restart, err = req.Request(fw, false, d.tried == 1)
+		restart, err = req.Request(fw, false, d.tried == d.maxTry>>1)
 		c.Close()
 	} else if IsDnsErr(err) {
 		// Trust the specified DNS.
