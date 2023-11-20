@@ -87,7 +87,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	logPre := "[" + d.ServerType + "] " + req.Command() + " " + req.Host() + " <- " + d.Client.RemoteAddr().String()
 	log.Printf("%v [type:%v]", logPre, strategy)
 
-	var restart bool
+	var restart bool // failed after the 2nd client packet has been sent following ServerHello
 	var err error
 	ok := false
 	v := 0.0
@@ -97,18 +97,14 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		if err == nil {
 			ok = true
 			v = 1.0
-			break
-		} else if restart {
-			// failed after the 2nd client packet has been sent following ServerHello
-			break
+		}
+		if globalOnline && strategy == statichost.StaticNil {
+			GlobalHostStats.Update(h, v)
+		}
+		if ok || restart {
+			return ok
 		}
 		// dialing or receiving ServerHello failed
-	}
-	if globalOnline && d.maxTry > 0 && strategy == statichost.StaticNil {
-		GlobalHostStats.Update(h, v)
-	}
-	if ok || restart {
-		return ok
 	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
@@ -120,11 +116,9 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		}
 	}
 
-	ok = false
 	if d.maxTry == 0 {
-		log.Printf("%v <= no proxy succeeded, try direct", logPre)
+		log.Printf("%v <= no proxy succeeded, try direct once", logPre)
 		d.maxTry = 1
-		v = 0.0
 		_, err = d.ServeDirect(req)
 		if err == nil {
 			v = 1.0
