@@ -143,24 +143,30 @@ func (d *Dispatcher) DispatchByStats() {
 	if stat.Count == 0 {
 		stat.Value = 1
 	}
-	if stat.Value > 0.8 {
+
+	v := stat.Value
+	d.directWave = v
+
+	if v > 0.8 {
 		d.maxTry = 3
-	} else if stat.Value > 0.6 {
+	} else if v > 0.6 {
 		d.maxTry = 2
-	} else if stat.Value > 0.4 || stat.Count <= hoststat.EwmaSlide {
-		d.maxTry = 1
-	} else if stat.Value > 0.3 && time.Since(stat.Time) > 5*time.Minute {
-		d.maxTry = 1
-	} else if stat.Value > 0.2 && time.Since(stat.Time) > 7*time.Minute {
-		d.maxTry = 1
-	} else if stat.Value > 0.1 && time.Since(stat.Time) > 13*time.Minute {
-		d.maxTry = 1
-	} else if time.Since(stat.Time) > 31*time.Minute {
+	} else if v > 0.4 || stat.Count <= hoststat.EwmaSlide {
 		d.maxTry = 1
 	} else {
-		d.maxTry = 0
+		dt := time.Since(stat.Time)
+		if v > 0.3 && dt > 5*time.Minute {
+			d.maxTry = 1
+		} else if v > 0.2 && dt > 7*time.Minute {
+			d.maxTry = 1
+		} else if v > 0.1 && dt > 13*time.Minute {
+			d.maxTry = 1
+		} else if dt > 31*time.Minute {
+			d.maxTry = 1
+		} else {
+			d.maxTry = 0
+		}
 	}
-	d.directWave = stat.Value
 }
 
 // The helper struct for DispatchIP.
