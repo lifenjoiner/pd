@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
-// URL based remote server availability checher.
+// Package checker is a URL based remote server availability checher.
 package checker
 
 import (
@@ -15,7 +15,7 @@ import (
 	"github.com/lifenjoiner/pd/protocol"
 )
 
-// Struct to check an URL directly or through proxy.
+// TargetChecker is the struct to check an URL directly or through proxy.
 type TargetChecker struct {
 	*url.URL
 	Timeout time.Duration
@@ -23,6 +23,7 @@ type TargetChecker struct {
 	Proxied *url.URL
 }
 
+// Transfer operates the check communication.
 func (ck *TargetChecker) Transfer() (err error) {
 	conn := ck.Conn
 	u := ck.Proxied
@@ -50,6 +51,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	return
 }
 
+// Check checks if the target responses succeeded.
 func (ck *TargetChecker) Check() (err error) {
 	var cs bufconn.ConnSolver
 	switch strings.ToLower(ck.URL.Scheme) {
@@ -85,10 +87,12 @@ func (ck *TargetChecker) Check() (err error) {
 	return
 }
 
+// NewTargetChecker packs a new TargetChecker.
 func NewTargetChecker(u *url.URL, d time.Duration, c *bufconn.Conn, p *url.URL) *TargetChecker {
 	return &TargetChecker{u, d, c, p}
 }
 
+// New generates a new TargetChecker from a URL string.
 func New(s string, d time.Duration, p string) (*TargetChecker, error) {
 	if len(s) == 0 {
 		return nil, errors.New("[TargetChecker] server URL is empty")

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package bufconn offers access to connections with buffer.
 package bufconn
 
 import (
@@ -17,17 +18,17 @@ type Conn struct {
 	R *bufio.Reader
 }
 
-// Non-blocking.
+// ReadData is non-blocking.
 func (c *Conn) ReadData() ([]byte, error) {
 	return ReadData(c.R)
 }
 
-// Blocking.
+// ReceiveData is blocking.
 func (c *Conn) ReceiveData() ([]byte, error) {
 	return ReceiveData(c.R)
 }
 
-// Break length pattern.
+// SplitWrite is to break length pattern.
 func (c *Conn) SplitWrite(b []byte, x int) (n int, err error) {
 	i := 0
 	if len(b) > x {
@@ -35,20 +36,21 @@ func (c *Conn) SplitWrite(b []byte, x int) (n int, err error) {
 		n, err = c.Write(b[:i])
 		if err != nil {
 			return
-		} else {
-			time.Sleep(time.Millisecond)
 		}
+		time.Sleep(time.Millisecond)
 	}
 	n, err = c.Write(b[i:])
 	n += i
 	return
 }
 
+// NewConn packs a `net.Conn` into a new `Conn`.
 func NewConn(c net.Conn) *Conn {
 	cc := &Conn{c, bufio.NewReader(c)}
 	return cc
 }
 
+// Dial dials the address with timeout.
 func Dial(network, address string, timeout time.Duration) (*Conn, error) {
 	c, err := net.DialTimeout(network, address, timeout)
 	var conn *Conn
@@ -58,6 +60,7 @@ func Dial(network, address string, timeout time.Duration) (*Conn, error) {
 	return conn, err
 }
 
+// DialURL dials the URL with timeout.
 func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
 	a := u.Host
 	if len(u.Port()) == 0 {
@@ -70,7 +73,7 @@ func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
 	return Dial(n, a, d)
 }
 
-// Non-blocking.
+// ReadData is non-blocking.
 func ReadData(r *bufio.Reader) ([]byte, error) {
 	n := r.Buffered()
 	b := make([]byte, n)
@@ -78,7 +81,7 @@ func ReadData(r *bufio.Reader) ([]byte, error) {
 	return b, err
 }
 
-// Blocking.
+// ReceiveData is blocking.
 func ReceiveData(r *bufio.Reader) ([]byte, error) {
 	_, err := r.Peek(1)
 	if err != nil {
@@ -87,7 +90,7 @@ func ReceiveData(r *bufio.Reader) ([]byte, error) {
 	return ReadData(r)
 }
 
-// The interface of Conn to solve the connection prerequisites to transfer the real data.
+// ConnSolver is the interface of Conn to solve the connection prerequisites to transfer the real data.
 // CONNECT to proxy. Maybe BIDN, UDP.
 type ConnSolver interface {
 	Bond(m, h, p string, b []byte) error

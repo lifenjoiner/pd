@@ -8,7 +8,8 @@ import (
 	"net"
 )
 
-func IsDnsErr(err error) bool {
+// IsDNSErr tests if the error is `net.DNSError`.
+func IsDNSErr(err error) bool {
 	if err == nil {
 		return false
 	}

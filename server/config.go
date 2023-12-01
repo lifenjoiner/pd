@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Config struct.
 type Config struct {
 	UpstreamTimeout time.Duration
 	ParallelDial    bool

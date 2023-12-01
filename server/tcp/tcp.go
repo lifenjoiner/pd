@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package tcp serves as a TCP layer server.
 package tcp
 
 import (

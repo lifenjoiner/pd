@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
-// Socks4a layer server entry.
+// Package socks4a serves as a socks4a layer server.
 package socks4a
 
 import (
@@ -15,6 +15,7 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
+// Server struct.
 type Server server.Server
 
 // Serve serves 1 client.

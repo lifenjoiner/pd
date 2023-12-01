@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package forwarder is the MITM that operates the communication without descryption.
 package forwarder
 
 import (
@@ -25,7 +26,7 @@ type Forwarder struct {
 	Wave      float64
 }
 
-// The reading size, could > 4k, need big enough to get the whole Tls Handshake packets.
+// The reading size, could > 4k, need big enough to get the whole TLS Handshake packets.
 // ServerHello + Certificate + ServerHelloDone
 //
 // Better Fragmentation for Loopback:
@@ -49,12 +50,14 @@ var bufPool = sync.Pool{
 	},
 }
 
+// TLS packet types.
 const (
-	TlsHandshake    byte = 0x16
-	TlsChangeCipher byte = 0x14
-	TlsApplication  byte = 0x17
+	TLSHandshake    byte = 0x16
+	TLSChangeCipher byte = 0x14
+	TLSApplication  byte = 0x17
 )
 
+// Tunnel operates the communication.
 func (fw *Forwarder) Tunnel() (bool, error) {
 	var wg sync.WaitGroup
 	var LrErr, LwErr, RrErr, RwErr error
@@ -62,9 +65,9 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 	LeftTimeout := 2 * fw.Timeout
 	RightTimeout := fw.Timeout
 	// Persisting is good for reuse to send without re-Handshake (SNI).
-	LeftTlsAlive := time.Duration((1 + fw.Wave) * 10 * float64(fw.Timeout))
-	RightTlsAlive := LeftTlsAlive + fw.Timeout
-	TlsStageRight := byte(0)
+	LeftTLSAlive := time.Duration((1 + fw.Wave) * 10 * float64(fw.Timeout))
+	RightTLSAlive := LeftTLSAlive + fw.Timeout
+	TLSStageRight := byte(0)
 	gotRightData := false
 
 	wg.Add(1)
@@ -80,11 +83,11 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
 			if LrErr == nil {
-				if TlsStageRight == TlsHandshake && LeftBuf[0] == TlsApplication && n > 1 && LeftBuf[1] == 0x03 {
+				if TLSStageRight == TLSHandshake && LeftBuf[0] == TLSApplication && n > 1 && LeftBuf[1] == 0x03 {
 					// Request data is sent. Some server may response slowly: snapshot downloading from https://repo.or.cz
 					//log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
-					LeftTimeout = LeftTlsAlive
-					RightTimeout = RightTlsAlive
+					LeftTimeout = LeftTLSAlive
+					RightTimeout = RightTLSAlive
 				}
 				//log.Printf("[forwarder] %v --> %v Read: %v", fw.LeftAddr, fw.RightAddr, n)
 				data := LeftBuf[0:n]
@@ -121,29 +124,29 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
 		if RrErr == nil {
 			// RightBuf has enough space.
-			if TlsStageRight == 0x00 {
-				TlsStageRight = RightBuf[0]
-				if RightBuf[0] == TlsHandshake && n > 1 && RightBuf[1] == 0x03 {
-					// Tls v1.2, a: ServerHello + Certificate + ServerKeyExchange + ServerHelloDone
-					// Tls v1.2, b: ServerHello + ChangeCipherSpec + EncryptedHandshakeMessage
-					// Tls v1.3: ServerHello + ChangeCipherSpec + ApplicationData
-					//log.Printf("[forwarder] TLS server Handshake data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
-				} else {
+			if TLSStageRight == 0x00 {
+				TLSStageRight = RightBuf[0]
+				if !(RightBuf[0] == TLSHandshake && n > 1 && RightBuf[1] == 0x03) {
 					gotRightData = true
+					//} else {
+					// TLS v1.2, a: ServerHello + Certificate + ServerKeyExchange + ServerHelloDone
+					// TLS v1.2, b: ServerHello + ChangeCipherSpec + EncryptedHandshakeMessage
+					// TLS v1.3: ServerHello + ChangeCipherSpec + ApplicationData
+					//log.Printf("[forwarder] TLS server Handshake data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
 				}
-			} else if TlsStageRight == TlsHandshake {
-				if (RightBuf[0] == TlsHandshake || RightBuf[0] == TlsChangeCipher) && n > 1 && RightBuf[1] == 0x03 {
-					// Tls v1.2, a: [NewSessionTicket + ]ChangeCipherSpec + EncryptedHandshakeMessage
+			} else if TLSStageRight == TLSHandshake {
+				if (RightBuf[0] == TLSHandshake || RightBuf[0] == TLSChangeCipher) && n > 1 && RightBuf[1] == 0x03 {
+					// TLS v1.2, a: [NewSessionTicket + ]ChangeCipherSpec + EncryptedHandshakeMessage
 					// Weixin server sleeps (25s) before sending application data for heartbeats.
-					LeftTimeout = LeftTlsAlive
-					RightTimeout = RightTlsAlive
-				} else if RightBuf[0] == TlsApplication && n > 1 && RightBuf[1] == 0x03 {
+					LeftTimeout = LeftTLSAlive
+					RightTimeout = RightTLSAlive
+				} else if RightBuf[0] == TLSApplication && n > 1 && RightBuf[1] == 0x03 {
 					// Response data is received.
 					//log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
-					TlsStageRight = TlsApplication
+					TLSStageRight = TLSApplication
 					gotRightData = true
-					LeftTimeout = LeftTlsAlive
-					RightTimeout = RightTlsAlive
+					LeftTimeout = LeftTLSAlive
+					RightTimeout = RightTLSAlive
 				}
 			}
 			data := RightBuf[0:n]
@@ -176,8 +179,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 	//log.Print(ok)
 	if ok {
 		return false, nil
-	} else {
-		restart := TlsStageRight == TlsHandshake || TlsStageRight == TlsApplication
-		return restart, RrErr
 	}
+	restart := TLSStageRight == TLSHandshake || TLSStageRight == TLSApplication
+	return restart, RrErr
 }

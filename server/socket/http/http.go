@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
-// HTTP layer server entry.
+// Package http serves as http layer server.
 package http
 
 import (
@@ -14,6 +14,7 @@ import (
 	"github.com/lifenjoiner/pd/server"
 )
 
+// Server struct.
 type Server server.Server
 
 // Serve serves 1 client.

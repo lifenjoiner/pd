@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
-// A proxy ranking model.
+// Package proxypool offers a proxy ranking model.
 package proxypool
 
 import (
@@ -27,6 +27,7 @@ type Proxy struct {
 	url  string
 }
 
+// Dup duplicates a Proxy struct.
 func (p *Proxy) Dup() *Proxy {
 	e := *p.Ewma
 	u := *p.URL
@@ -34,11 +35,13 @@ func (p *Proxy) Dup() *Proxy {
 	return &Proxy{&e, &u, s}
 }
 
+// Check the avalability of a Proxy.
 func (p *Proxy) Check(target *url.URL, timeout time.Duration) error {
 	ck := checker.NewTargetChecker(p.URL, timeout, nil, target)
 	return ck.Check()
 }
 
+// NewProxy generates a Proxy form a URL string.
 func NewProxy(s string) (*Proxy, error) {
 	u, err := url.Parse(s)
 	if err != nil {
@@ -51,6 +54,7 @@ func NewProxy(s string) (*Proxy, error) {
 	}, nil
 }
 
+// NewProxies generates Proxies form URL strings.
 func NewProxies(urls []string) []*Proxy {
 	var proxies []*Proxy
 	for _, s := range urls {
@@ -68,6 +72,7 @@ func NewProxies(urls []string) []*Proxy {
 	return proxies
 }
 
+// ProxyPool struct.
 type ProxyPool struct {
 	sync.RWMutex
 	Proxies       []*Proxy
@@ -76,7 +81,7 @@ type ProxyPool struct {
 	Timeout       time.Duration
 }
 
-// Get a proxy by index mapping.
+// GetProxy gets a proxy by index mapping.
 func (pp *ProxyPool) GetProxy(i int) (p Proxy) {
 	pp.RLock()
 	n := len(pp.Proxies)
@@ -127,7 +132,7 @@ func (pp *ProxyPool) Update() {
 	pp.Unlock()
 }
 
-// Initialize a ProxyPool from configured URLs.
+// InitProxyPool initializes a ProxyPool from configured URLs.
 func InitProxyPool(urls string, test string, timeout time.Duration) (pp map[string]*ProxyPool) {
 	pp = make(map[string]*ProxyPool)
 

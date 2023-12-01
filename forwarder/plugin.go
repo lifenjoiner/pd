@@ -4,6 +4,7 @@
 
 package forwarder
 
+// Transformer offers methods on the data.
 type Transformer interface {
 	Transform([]byte) []byte
 }

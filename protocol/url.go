@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Get the omitted port of an URL.
+// GetPort gets the omitted port of an URL.
 func GetPort(u *url.URL) string {
 	port := u.Port()
 	if len(port) == 0 {

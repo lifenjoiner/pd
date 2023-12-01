@@ -18,13 +18,14 @@ import (
 	"github.com/lifenjoiner/pd/protocol"
 )
 
+// Request struct.
 type Request struct {
 	Method    string
 	url       string
 	Proto     string
 	Auth      string
 	PostData  []byte // to retry to defend RST
-	TlsData   []byte // to retry to defend RST, ClientHello
+	TLSData   []byte // to retry to defend RST, ClientHello
 	Responsed bool
 
 	Header   textproto.MIMEHeader
@@ -32,48 +33,54 @@ type Request struct {
 	TryCount byte
 }
 
+// Command requested by.
 func (r *Request) Command() string {
 	return r.Method
 }
 
+// Target URL requested to.
 func (r *Request) Target() string {
 	return r.url
 }
 
+// Host requested to.
 func (r *Request) Host() string {
 	return r.URL.Host
 }
 
+// Hostname only requested to.
 func (r *Request) Hostname() string {
 	return r.URL.Hostname()
 }
 
+// Port requested to.
 func (r *Request) Port() string {
 	return protocol.GetPort(r.URL)
 }
 
-// Request the ClientHello for sending to a remote server.
+// GetRequest requests the ClientHello for sending to a remote server.
 // RCWN (Race Cache With Network) or ads blockers would abort dial-in without sendig ClientHello! Drop it.
 func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	if !r.Responsed {
 		_, err = w.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
 		r.Responsed = true
 		if err == nil {
-			err = r.cacheTlsData(rd)
+			err = r.cacheTLSData(rd)
 		}
 	}
 	return
 }
 
+// Request to a upstream server.
 func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if r.Method == "CONNECT" {
-		if len(r.TlsData) > 0 {
+		if len(r.TLSData) > 0 {
 			if seg {
-				_, err = fw.RightConn.SplitWrite(r.TlsData, 6)
+				_, err = fw.RightConn.SplitWrite(r.TLSData, 6)
 			} else {
-				_, err = fw.RightConn.Write(r.TlsData)
+				_, err = fw.RightConn.Write(r.TLSData)
 			}
 		} else {
 			// drop it
@@ -99,8 +106,8 @@ func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart boo
 	return
 }
 
-func (r *Request) cacheTlsData(rd *bufio.Reader) (err error) {
-	r.TlsData, err = bufconn.ReceiveData(rd)
+func (r *Request) cacheTLSData(rd *bufio.Reader) (err error) {
+	r.TLSData, err = bufconn.ReceiveData(rd)
 	return
 }
 
@@ -137,6 +144,7 @@ func (r *Request) writeRequest(w io.Writer, proxy bool) (err error) {
 	return
 }
 
+// ParseRequest parses a request.
 func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 	tpr := textproto.NewReader(rd)
 	line, err := tpr.ReadLine()

@@ -13,6 +13,7 @@ import (
 	"github.com/lifenjoiner/pd/protocol/socks"
 )
 
+// Socks4aConn represents a socks4a connection.
 type Socks4aConn Conn
 
 func (c *Socks4aConn) bondData(m, h, p string) ([]byte, error) {
@@ -39,6 +40,7 @@ func (c *Socks4aConn) bondData(m, h, p string) ([]byte, error) {
 	return data, err
 }
 
+// Bond bonds a socks4a connection with the server.
 func (c *Socks4aConn) Bond(m, h, p string, b []byte) (err error) {
 	if len(b) == 0 {
 		b, err = c.bondData(m, h, p)
@@ -60,14 +62,12 @@ func (c *Socks4aConn) Bond(m, h, p string, b []byte) (err error) {
 	return err
 }
 
+// GetConn returns the packed `*Conn` from a `*Socks4aConn`.
 func (c *Socks4aConn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewSocks4aConn(c *Conn, u *url.URL) *Socks4aConn {
-	return (*Socks4aConn)(c)
-}
-
+// DialSocks4a dials a socks4a URL with timeout.
 func DialSocks4a(u *url.URL, d time.Duration) (*Socks4aConn, error) {
 	c, err := DialURL(u, d)
 	return (*Socks4aConn)(c), err

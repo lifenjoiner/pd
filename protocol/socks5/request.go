@@ -15,6 +15,7 @@ import (
 	"github.com/lifenjoiner/pd/protocol/socks"
 )
 
+// Request struct.
 type Request struct {
 	Ver         byte
 	Cmd         byte
@@ -26,6 +27,7 @@ type Request struct {
 	Responsed   bool
 }
 
+// Command requested by.
 func (r *Request) Command() (m string) {
 	switch r.Cmd {
 	case CmdConnect:
@@ -38,22 +40,28 @@ func (r *Request) Command() (m string) {
 	return
 }
 
+// Target URL requested to.
 func (r *Request) Target() string {
 	return r.DestHost + ":" + r.DestPort
 }
 
+// Host requested to.
 func (r *Request) Host() string {
 	return r.DestHost + ":" + r.DestPort
 }
 
+// Hostname only requested to.
 func (r *Request) Hostname() string {
 	return r.DestHost
 }
 
+// Port requested to.
 func (r *Request) Port() string {
 	return r.DestPort
 }
 
+// GetRequest requests the ClientHello for sending to a remote server.
+// RCWN (Race Cache With Network) or ads blockers would abort dial-in without sendig ClientHello! Drop it.
 func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	if !r.Responsed {
 		_, err = w.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0})
@@ -65,7 +73,8 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 	return
 }
 
-func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error) {
+// Request to a upstream server.
+func (r *Request) Request(fw *forwarder.Forwarder, _, seg bool) (restart bool, err error) {
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if seg {
@@ -79,6 +88,7 @@ func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart boo
 	return
 }
 
+// ParseRequest parses a request.
 func ParseRequest(rd *bufio.Reader) (req *Request, err error) {
 	var p socks.Packet
 	p, err = bufconn.ReceiveData(rd)

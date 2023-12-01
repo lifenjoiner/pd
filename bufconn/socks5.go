@@ -13,6 +13,7 @@ import (
 	"github.com/lifenjoiner/pd/protocol/socks"
 )
 
+// Socks5Conn represents a socks5 connection.
 type Socks5Conn Conn
 
 func (c *Socks5Conn) authorize() (err error) {
@@ -50,6 +51,7 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 	return data, err
 }
 
+// Bond bonds a socks5 connection with the server.
 func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
 	if len(b) == 0 {
 		b, err = c.bondData(m, h, p)
@@ -74,14 +76,12 @@ func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
 	return
 }
 
+// GetConn returns the packed `*Conn` from a `*Socks5Conn`.
 func (c *Socks5Conn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewSocks5Conn(c *Conn, u *url.URL) *Socks5Conn {
-	return (*Socks5Conn)(c)
-}
-
+// DialSocks5 dials a socks5 URL with timeout.
 func DialSocks5(u *url.URL, d time.Duration) (*Socks5Conn, error) {
 	c, err := DialURL(u, d)
 	return (*Socks5Conn)(c), err

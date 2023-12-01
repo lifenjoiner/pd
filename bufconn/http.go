@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// HTTPConn represents a HTTP connection.
 type HTTPConn Conn
 
 func (c *HTTPConn) bondData(m, h, p string) ([]byte, error) {
@@ -26,6 +27,7 @@ func (c *HTTPConn) bondData(m, h, p string) ([]byte, error) {
 	return data, nil
 }
 
+// Bond bonds a HTTP connection with the server.
 func (c *HTTPConn) Bond(m, h, p string, b []byte) (err error) {
 	if len(b) == 0 {
 		b, err = c.bondData(m, h, p)
@@ -48,14 +50,12 @@ func (c *HTTPConn) Bond(m, h, p string, b []byte) (err error) {
 	return err
 }
 
+// GetConn returns the packed `*Conn` from a `*HTTPConn`.
 func (c *HTTPConn) GetConn() *Conn {
 	return (*Conn)(c)
 }
 
-func NewHTTPConn(c *Conn) *HTTPConn {
-	return (*HTTPConn)(c)
-}
-
+// DialHTTP dials a HTTP URL with timeout.
 func DialHTTP(u *url.URL, d time.Duration) (*HTTPConn, error) {
 	c, err := DialURL(u, d)
 	return (*HTTPConn)(c), err

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package dispatcher decides if a client is served directly or by a proxy.
 package dispatcher
 
 import (
@@ -33,7 +34,7 @@ var (
 // If we are offline, don't update the GlobalHostStats.
 var globalOnline bool
 
-// What a dispatcher instance is composed with.
+// Dispatcher struct is what a dispatcher instance is composed with.
 type Dispatcher struct {
 	ServerType   string
 	Client       *bufconn.Conn
@@ -49,7 +50,7 @@ type Dispatcher struct {
 	proxyTried  int
 }
 
-// The Dispatcher constructor.
+// New generates a new Dispatcher.
 func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispatcher {
 	return &Dispatcher{
 		ServerType: s,
@@ -60,7 +61,7 @@ func New(s string, c *bufconn.Conn, h string, p string, d time.Duration) *Dispat
 	}
 }
 
-// The main dispatcher, that dispatches how a client connection will be served.
+// Dispatch is the main dispatcher, that dispatches how a client connection will be served.
 func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	d.directWave = 1
 
@@ -131,12 +132,12 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	return ok
 }
 
-// Decide whether the host is aways go direct or proxied.
+// DispatchByStaticRules decides whether the host is aways go direct or proxied.
 func (d *Dispatcher) DispatchByStaticRules() statichost.Strategy {
 	return GlobalStaticHosts.GetStrategy(d.DestHost)
 }
 
-// Solve the direct connect tries by HostStat.
+// DispatchByStats solves the direct connecting tries by HostStat.
 func (d *Dispatcher) DispatchByStats() {
 	h := d.DestHost + ":" + d.DestPort
 	stat := GlobalHostStats.GetStat(h)
@@ -169,7 +170,7 @@ func (d *Dispatcher) DispatchByStats() {
 	}
 }
 
-// The helper struct for DispatchIP.
+// goodConn is the helper struct for DispatchIP.
 type goodConn struct {
 	sync.RWMutex
 	c   net.Conn
@@ -177,7 +178,7 @@ type goodConn struct {
 	n   int
 }
 
-// Get the quickest responsive IP for a direct connection.
+// DispatchIP gets the quickest responded IP for a direct connection.
 func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	if !d.ParallelDial || (d.tried < 1 && d.maxTry > 1) || statichost.HostIsIP(d.DestHost) {
 		c, err := net.DialTimeout("tcp", net.JoinHostPort(d.DestHost, d.DestPort), d.Timeout)
@@ -236,7 +237,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	return conn, err
 }
 
-// Get the best proxy Conn.
+// DispatchProxy gets the best proxy Conn.
 func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Proxy, err error) {
 	ProxyPool := GlobalProxyPool[d.ServerType]
 	if ProxyPool == nil {
@@ -255,19 +256,18 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Pro
 		}
 		if proxy.URL.User == nil {
 			return
-		} else {
-			c := cs.GetConn()
-			_ = c.SetDeadline(time.Now())
-			c.Close()
-			err = errors.New("proxy authentication is not implemented")
 		}
+		c := cs.GetConn()
+		_ = c.SetDeadline(time.Now())
+		c.Close()
+		err = errors.New("proxy authentication is not implemented")
 	} else {
 		err = errors.New("no valid proxy")
 	}
 	return
 }
 
-// Serve the client by direct connecting to the server.
+// ServeDirect serves the client by direct connection to the server.
 func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Host())
@@ -301,7 +301,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		}
 		restart, err = req.Request(fw, false, d.tried == d.maxTry>>1)
 		c.Close()
-	} else if IsDnsErr(err) {
+	} else if IsDNSErr(err) {
 		// Trust the specified DNS.
 		// If the DNS isn't reliable enough, place a host in `blocked` to go proxied directly.
 		// Host mapping `0.0.0.0` or `::` error: The requested name is valid, but no data of the requested type was found.
@@ -315,7 +315,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	return restart, err
 }
 
-// Serve the client by proxy.
+// ServeProxied serves the client by proxy.
 func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Host())
@@ -352,16 +352,16 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	return restart, err
 }
 
+// NotInternetHost checks if the host is for public servers.
 func NotInternetHost(h string) bool {
 	if statichost.HostIsIP(h) {
 		IP := net.ParseIP(h)
 		return !IP.IsGlobalUnicast() || IP.IsPrivate()
-	} else {
-		return !strings.Contains(h, ".")
 	}
+	return !strings.Contains(h, ".")
 }
 
-// Check if we are online.
+// StartProbeDirect checks if we are online.
 func StartProbeDirect(url string, d time.Duration) {
 	globalOnline = true
 	ck, err := checker.New(url, d, "")
@@ -378,8 +378,7 @@ func StartProbeDirect(url string, d time.Duration) {
 			}
 		}()
 		return
-	} else {
-		log.Print(err)
 	}
+	log.Print(err)
 	log.Printf("[dispatcher] No probing URL available, always act as online!")
 }

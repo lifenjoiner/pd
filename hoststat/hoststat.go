@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package hoststat offers host connection quality statistics and predefined sorts.
 package hoststat
 
 import (
@@ -24,10 +25,10 @@ import (
 }
 */
 
-// The EWMA window size.
+// EwmaSlide is the EWMA window size.
 const EwmaSlide int = 10
 
-// A single HostStat.
+// HostStat is a single HostStat.
 type HostStat struct {
 	Value float64   `json:"v"`
 	Count int       `json:"n"`
@@ -35,7 +36,7 @@ type HostStat struct {
 	ewma  *ewma.EWMA
 }
 
-// The whole HostStats.
+// HostStats holds all HostStats.
 type HostStats struct {
 	sync.RWMutex
 	Stats          map[string]*HostStat
@@ -44,7 +45,7 @@ type HostStats struct {
 	LastRecount    time.Time
 }
 
-// Get the HostStat.
+// GetStat gets the HostStat.
 func (hs *HostStats) GetStat(h string) (stat HostStat) {
 	hs.RLock()
 	st := hs.Stats[h]
@@ -81,7 +82,7 @@ func (hs *HostStats) Update(h string, v float64) {
 	hs.Unlock()
 }
 
-// Clean expired stats up, and reset the stat periodically.
+// Cleanup cleans expired stats up, and reset the stat periodically.
 func (hs *HostStats) Cleanup() {
 	if hs.Stats == nil {
 		return
@@ -144,7 +145,7 @@ func (hs *HostStats) Save(file string) {
 	}
 }
 
-// Load HostStats from a file, and save back the new results periodically.
+// MapStatsFile loads HostStats from a file, and save back the new results periodically.
 func MapStatsFile(file string, validity time.Duration) (hs *HostStats) {
 	hs = &HostStats{
 		Validity:       validity,

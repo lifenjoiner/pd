@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
-// A host (ip) matching model.
+// Package statichost is a host (ip) matching model.
 package statichost
 
 import (
@@ -18,8 +18,10 @@ const (
 	StaticBlocked
 )
 
+// Strategy type.
 type Strategy byte
 
+// StaticHosts struct.
 type StaticHosts map[string]Strategy
 
 // Load settings from a file.
@@ -31,7 +33,7 @@ func (sh StaticHosts) Load(file string, strategy Strategy) {
 	sh.Upsert(string(data), strategy)
 }
 
-// Update/insert the StaticHosts by line(s) of items for a same strategy.
+// Upsert updates/inserts the StaticHosts by line(s) of items for a same strategy.
 // host: sufix, ip: prefix.
 func (sh StaticHosts) Upsert(in string, strategy Strategy) {
 	lines := strings.Split(in, "\n")
@@ -47,7 +49,7 @@ func (sh StaticHosts) Upsert(in string, strategy Strategy) {
 	}
 }
 
-// Get the strategy of an hostname. Right to left, match sufix after the separator first.
+// GetHostStrategy gets the strategy of an hostname. Right to left, match sufix after the separator first.
 func (sh StaticHosts) GetHostStrategy(host string) Strategy {
 	h := "." + host
 	for i := len(host); i >= 0; i-- {
@@ -63,7 +65,7 @@ func (sh StaticHosts) GetHostStrategy(host string) Strategy {
 	return sh["="+host]
 }
 
-// Get the strategy of an ip. Left to right.
+// GetIPStrategy gets the strategy of an ip. Left to right.
 // IP syntax: a.b.c.d, 127.0.0.*, 192.168.*, or 10.*; * is required as IPv6 would omit `0`s.
 func (sh StaticHosts) GetIPStrategy(ip string) Strategy {
 	// "::ffff:192.0.2.1"
@@ -83,15 +85,15 @@ func (sh StaticHosts) GetIPStrategy(ip string) Strategy {
 	return sh[ip]
 }
 
-// Get the strategy for a host or ip.
+// GetStrategy gets the strategy for a host or ip.
 func (sh StaticHosts) GetStrategy(q string) Strategy {
 	if HostIsIP(q) {
 		return sh.GetIPStrategy(q)
-	} else {
-		return sh.GetHostStrategy(q)
 	}
+	return sh.GetHostStrategy(q)
 }
 
+// HostIsIP tests if a host only name is IP.
 func HostIsIP(h string) bool {
 	n := len(h)
 	if n <= 0 {
@@ -101,7 +103,7 @@ func HostIsIP(h string) bool {
 	return '0' <= v && v <= '9' || strings.ContainsRune(h, ':')
 }
 
-// Load all settings.
+// MapStaticFiles loads all settings from files.
 // Priority: StaticDirect > StaticBlocked
 func MapStaticFiles(blocked, direct string) StaticHosts {
 	sh := StaticHosts{}

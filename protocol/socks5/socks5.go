@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package socks5 offers protocol operations.
 package socks5
 
 import (
@@ -33,6 +34,7 @@ const (
 	ATypeIPv6   = 4
 )
 
+// Authorize a client permission to proceed.
 func Authorize(w io.Writer, rd *bufio.Reader) (err error) {
 	var p socks.Packet
 	p, err = bufconn.ReceiveData(rd)

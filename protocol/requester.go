@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE file.
 
+// Package protocol offers operations for protocols.
 package protocol
 
 import (
@@ -11,7 +12,7 @@ import (
 	"github.com/lifenjoiner/pd/forwarder"
 )
 
-// The interface to send the proxied request to upstream servers.
+// Requester sends the proxied request to upstream servers.
 type Requester interface {
 	Command() string
 	Target() string
