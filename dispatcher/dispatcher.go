@@ -198,6 +198,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 
 	var goodConn goodConn
 	goodConn.n = len(IPs)
+	waitChannel := make(chan struct{})
 	for i := 0; i < goodConn.n; i++ {
 		ip := IPs[i]
 		go func() {
@@ -206,8 +207,10 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 			if goodConn.c == nil {
 				if err == nil { // bad ip returns fast too
 					goodConn.c = c
+					close(waitChannel)
 				} else if goodConn.n == 1 { // return the last err (timeout)
 					goodConn.err = err
+					close(waitChannel)
 				}
 			} else if err == nil {
 				// ESTABLISHED
@@ -219,20 +222,15 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 		}()
 	}
 
+	<-waitChannel
 	var conn *bufconn.Conn
-	for {
-		goodConn.RLock()
-		if goodConn.c != nil {
-			conn = bufconn.NewConn(goodConn.c)
-		} else if goodConn.n <= 0 {
-			err = goodConn.err
-		}
-		goodConn.RUnlock()
-		if conn != nil || err != nil {
-			break
-		}
-		time.Sleep(time.Nanosecond)
+	goodConn.RLock()
+	if goodConn.c != nil {
+		conn = bufconn.NewConn(goodConn.c)
+	} else if goodConn.n <= 0 {
+		err = goodConn.err
 	}
+	goodConn.RUnlock()
 
 	return conn, err
 }
