@@ -42,7 +42,7 @@ func ServeFromConfig(config *Config) {
 
 func main() {
 	cfg := parseConfig()
-	log.Printf("%v v%v %v", name, version, description)
+	log.Printf("%v v%v - %v", name, version, description)
 	ServeFromConfig(cfg)
 
 	sigCh := make(chan os.Signal, 1)

@@ -22,7 +22,11 @@ type Server server.Server
 
 // ListenAndServe listens on the Addr and serves connections.
 func (s *Server) ListenAndServe() {
-	l, err := net.Listen("tcp", s.Addr)
+	network := "tcp"
+	if s.Addr[0] >= '0' && s.Addr[0] <= '9' {
+		network += "4"
+	}
+	l, err := net.Listen(network, s.Addr)
 	if err != nil {
 		log.Printf("[tcp] failed to listen on %s: %v\n", s.Addr, err)
 		return
