@@ -92,6 +92,22 @@ func (pp *ProxyPool) GetProxy(i int) (p *Proxy) {
 	return
 }
 
+// Sort the proxies in pool.
+func (pp *ProxyPool) Sort() {
+	pp.Lock()
+	sort.Slice(pp.Proxies, func(i, j int) bool {
+		return pp.Proxies[i].Ewma.Value() < pp.Proxies[j].Ewma.Value()
+	})
+	pp.Unlock()
+}
+
+// UpdateProxy updates EWMA of the specified proxy.
+func (pp *ProxyPool) UpdateProxy(p *Proxy, d time.Duration) {
+	pp.Lock()
+	p.Ewma.Add(float64(d))
+	pp.Unlock()
+}
+
 // Update and sort the EWMA of proxies in the pool.
 func (pp *ProxyPool) Update() {
 	N := len(pp.Proxies)
@@ -116,15 +132,14 @@ func (pp *ProxyPool) Update() {
 			if p.Check(pp.ProxyProbeURL, pp.Timeout) == nil {
 				d = time.Since(startTime)
 			}
-			p.Ewma.Add(float64(d))
+			pp.UpdateProxy(p, d)
 		}()
 	}
 	wg.Wait()
 
+	pp.Sort()
+	// non-break list
 	pp.Lock()
-	sort.Slice(pp.Proxies, func(i, j int) bool {
-		return pp.Proxies[i].Ewma.Value() < pp.Proxies[j].Ewma.Value()
-	})
 	log.Printf("[ProxyPool] Sorted latencies:")
 	for _, p := range pp.Proxies {
 		log.Printf("[ProxyPool]  %v %s://%s", time.Duration(p.Ewma.Value()), p.URL.Scheme, p.URL.Host)

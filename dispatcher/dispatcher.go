@@ -236,8 +236,8 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 }
 
 // DispatchProxy gets the best proxy Conn.
-func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, p *proxypool.Proxy, err error) {
-	pp := GlobalProxyPool[d.ServerType]
+func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, pp *proxypool.ProxyPool, p *proxypool.Proxy, err error) {
+	pp = GlobalProxyPool[d.ServerType]
 	if pp == nil {
 		err = errors.New("no valid proxy")
 		return
@@ -326,7 +326,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 		}
 	}
 	restart := false
-	conn, p, err := d.DispatchProxy()
+	conn, pp, p, err := d.DispatchProxy()
 	if err == nil {
 		c := conn.GetConn()
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), p.URL.Host)
@@ -346,6 +346,10 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
+		if globalOnline && p != nil {
+			pp.UpdateProxy(p, 3*pp.Timeout)
+			pp.Sort()
+		}
 	}
 	return restart, err
 }
