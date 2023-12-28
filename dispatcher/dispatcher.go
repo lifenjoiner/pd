@@ -236,23 +236,23 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 }
 
 // DispatchProxy gets the best proxy Conn.
-func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, proxy proxypool.Proxy, err error) {
-	ProxyPool := GlobalProxyPool[d.ServerType]
-	if ProxyPool == nil {
+func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, p *proxypool.Proxy, err error) {
+	pp := GlobalProxyPool[d.ServerType]
+	if pp == nil {
 		err = errors.New("no valid proxy")
 		return
 	}
-	proxy = ProxyPool.GetProxy(d.proxyTried)
-	if proxy.URL != nil {
+	p = pp.GetProxy(d.proxyTried)
+	if p.URL != nil {
 		switch d.ServerType {
 		case "http":
-			cs, err = bufconn.DialHTTP(proxy.URL, ProxyPool.Timeout)
+			cs, err = bufconn.DialHTTP(p.URL, pp.Timeout)
 		case "socks5":
-			cs, err = bufconn.DialSocks5(proxy.URL, ProxyPool.Timeout)
+			cs, err = bufconn.DialSocks5(p.URL, pp.Timeout)
 		case "socks4a":
-			cs, err = bufconn.DialSocks4a(proxy.URL, ProxyPool.Timeout)
+			cs, err = bufconn.DialSocks4a(p.URL, pp.Timeout)
 		}
-		if proxy.URL.User == nil {
+		if p.URL.User == nil {
 			return
 		}
 		c := cs.GetConn()

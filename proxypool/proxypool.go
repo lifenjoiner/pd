@@ -82,11 +82,11 @@ type ProxyPool struct {
 }
 
 // GetProxy gets a proxy by index mapping.
-func (pp *ProxyPool) GetProxy(i int) (p Proxy) {
+func (pp *ProxyPool) GetProxy(i int) (p *Proxy) {
 	pp.RLock()
 	n := len(pp.Proxies)
 	if n > 0 {
-		p = *pp.Proxies[i%n]
+		p = pp.Proxies[i%n]
 	}
 	pp.RUnlock()
 	return
