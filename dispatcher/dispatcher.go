@@ -227,7 +227,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	goodConn.RLock()
 	if goodConn.c != nil {
 		conn = bufconn.NewConn(goodConn.c)
-	} else if goodConn.n <= 0 {
+	} else {
 		err = goodConn.err
 	}
 	goodConn.RUnlock()
