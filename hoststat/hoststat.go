@@ -61,7 +61,6 @@ func (hs *HostStats) Update(h string, v float64) {
 	hs.Lock()
 	stats := hs.Stats
 	if stats[h] == nil {
-		//stats.Stats = make(map[string]*HostStat)
 		stats[h] = &HostStat{}
 	}
 	stat := stats[h]
