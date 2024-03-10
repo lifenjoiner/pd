@@ -305,7 +305,11 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		// Host mapping `0.0.0.0` or `::` error: The requested name is valid, but no data of the requested type was found.
 		// Disabled domain error: no such host
 		// Host mapping `127.0.0.1` or `::1` is valid!
-		_, err = client.Write([]byte("HTTP/1.1 569 DNS Orz\r\n\r\n"))
+		if req.Command() == "CONNECT" {
+			_, err = client.Write([]byte("\x15\x03\x03\x00\x02\x02\x00"))
+		} else {
+			_, err = client.Write([]byte("HTTP/1.1 569 DNS Orz\r\n\r\n"))
+		}
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
