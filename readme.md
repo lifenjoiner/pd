@@ -5,8 +5,9 @@
 1. 专注做一个连接调度器，上级代理要自备；
 2. 可自动选择回应最快的 IP；
 3. 自动生成可用性评分，可用性低时切换用代理；
-4. 支持 socks4a/socks5/http 协议；
-5. 支持预设“直连/被封”列表。
+4. 支持 socks4a/socks5/http 协议
+5. 支持预设“直连/被封”列表；
+6. 可做为 PAC 文件服务器。
 
 ## 用法
 
@@ -91,7 +92,7 @@ wikipedia.org
 
 ## 局限
 
-网站自己限制（封禁）的站点或者路径并不能被识别。
+网站自己限制（封禁）访问的站点或者路径并不能被识别。
 
 ## 统计 Vs 隐私
 
@@ -113,7 +114,8 @@ https://github.com/lifenjoiner/pd
 2. May automatically choose the fatest responsed IP,
 3. Automatically yield the availability score, and proxy it if with poor availability,
 4. Support protocols socks4a/socks5/http,
-5. Support predefined "direct/blocked" list files.
+5. Support predefined "direct/blocked" list files,
+6. Serve as a PAC file server.
 
 ## Usage
 
