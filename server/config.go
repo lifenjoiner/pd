@@ -14,4 +14,5 @@ type Config struct {
 	ParallelDial    bool
 	Proxies         string
 	ProxyProbeURL   string
+	PacFile         string
 }
