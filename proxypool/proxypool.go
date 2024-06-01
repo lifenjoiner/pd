@@ -165,7 +165,6 @@ func InitProxyPool(urls string, test string, timeout time.Duration) (pp map[stri
 
 	allowedSchemes := [3]string{"http", "socks5", "socks4a"}
 	for _, p := range proxies {
-		p.URL.Scheme = strings.ToLower(p.URL.Scheme)
 		s := p.URL.Scheme
 		switch s {
 		case "http", "socks5", "socks4a":

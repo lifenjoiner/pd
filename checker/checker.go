@@ -8,7 +8,6 @@ package checker
 import (
 	"errors"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/lifenjoiner/pd/bufconn"
@@ -31,7 +30,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 		u = ck.URL
 	}
 	_ = conn.SetDeadline(time.Now().Add(ck.Timeout))
-	switch strings.ToLower(u.Scheme) {
+	switch u.Scheme {
 	case "https":
 		_, err = conn.Write([]byte("\x15\x03\x03\x00\x01\x00"))
 	case "http":
@@ -54,7 +53,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 // Check checks if the target responses succeeded.
 func (ck *TargetChecker) Check() (err error) {
 	var cs bufconn.ConnSolver
-	switch strings.ToLower(ck.URL.Scheme) {
+	switch ck.URL.Scheme {
 	case "http", "https":
 		cs, err = bufconn.DialHTTP(ck.URL, ck.Timeout)
 	case "socks5":

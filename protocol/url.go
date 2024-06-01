@@ -6,14 +6,13 @@ package protocol
 
 import (
 	"net/url"
-	"strings"
 )
 
 // GetPort gets the omitted port of an URL.
 func GetPort(u *url.URL) string {
 	port := u.Port()
 	if len(port) == 0 {
-		switch strings.ToLower(u.Scheme) {
+		switch u.Scheme {
 		case "http":
 			port = "80"
 		case "https":
