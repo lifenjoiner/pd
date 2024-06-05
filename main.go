@@ -20,7 +20,7 @@ import (
 
 var (
 	name        = "pd"
-	version     = "0.1.10"
+	version     = "0.1.11"
 	description = "A local proxy dispatcher."
 )
 
