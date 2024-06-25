@@ -66,7 +66,6 @@ func (ck *TargetChecker) Check() (err error) {
 	}
 	if err == nil {
 		conn := cs.GetConn()
-		_ = conn.SetDeadline(time.Now().Add(ck.Timeout))
 		pu := ck.Proxied
 		if ck.Proxied != nil {
 			port := protocol.GetPort(pu)

@@ -55,6 +55,7 @@ func Dial(network, address string, timeout time.Duration) (*Conn, error) {
 	c, err := net.DialTimeout(network, address, timeout)
 	var conn *Conn
 	if err == nil {
+		_ = c.SetDeadline(time.Now().Add(timeout))
 		conn = NewConn(c)
 	}
 	return conn, err
