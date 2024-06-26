@@ -36,7 +36,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	case "http":
 		_, err = conn.Write([]byte("HEAD / HTTP/1.1\r\nHost: " + ck.Host + "\r\n\r\n"))
 	default:
-		err = errors.New("[TargetChecker] unkown scheme: " + u.Scheme)
+		err = errors.New("TargetChecker: unkown target scheme: " + u.Scheme)
 	}
 	if err != nil {
 		return
@@ -45,7 +45,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	if err == nil {
 		_, err = conn.R.Discard(conn.R.Buffered())
 	} else {
-		err = errors.New("[TargetChecker] no response")
+		err = errors.New("TargetChecker: no response")
 	}
 	return
 }
@@ -61,7 +61,7 @@ func (ck *TargetChecker) Check() (err error) {
 	case "socks4a":
 		cs, err = bufconn.DialSocks4a(ck.URL, ck.Timeout)
 	default:
-		err = errors.New("[TargetChecker] unknown scheme: " + ck.URL.Scheme)
+		err = errors.New("TargetChecker: unknown proxy scheme: " + ck.URL.Scheme)
 		return
 	}
 	if err == nil {
@@ -72,7 +72,7 @@ func (ck *TargetChecker) Check() (err error) {
 			if len(port) > 0 {
 				err = cs.Bond("CONNECT", pu.Hostname(), port, nil)
 			} else {
-				err = errors.New("[TargetChecker] unknown port for target")
+				err = errors.New("TargetChecker: unknown port for target")
 			}
 		}
 		if err == nil {
@@ -93,18 +93,18 @@ func NewTargetChecker(u *url.URL, d time.Duration, c *bufconn.Conn, p *url.URL) 
 // New generates a new TargetChecker from a URL string.
 func New(s string, d time.Duration, p string) (*TargetChecker, error) {
 	if len(s) == 0 {
-		return nil, errors.New("[TargetChecker] server URL is empty")
+		return nil, errors.New("TargetChecker: server URL is empty")
 	}
 	u, err := url.Parse(s)
 	if err != nil {
-		return nil, errors.New("[TargetChecker] server URL is invalid")
+		return nil, errors.New("TargetChecker: server URL is invalid")
 	}
 	var pu *url.URL
 	if len(p) > 0 {
 		pu, err = url.Parse(p)
 	}
 	if err != nil {
-		return nil, errors.New("[TargetChecker] proxy URL is invalid")
+		return nil, errors.New("TargetChecker: proxy URL is invalid")
 	}
 	return NewTargetChecker(u, d, nil, pu), nil
 }
