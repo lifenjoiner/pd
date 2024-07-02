@@ -78,7 +78,10 @@ func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart boo
 	if r.Method == "CONNECT" {
 		if len(r.TLSData) > 0 {
 			if seg {
-				_, err = fw.RightConn.SplitWrite(r.TLSData, 6)
+				h := []byte(r.URL.Hostname())
+				i := bytes.Index(r.TLSData, h)
+				i += len(h) / 2
+				_, err = fw.RightConn.SplitWrite(r.TLSData, i)
 			} else {
 				_, err = fw.RightConn.Write(r.TLSData)
 			}

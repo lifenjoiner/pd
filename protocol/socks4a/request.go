@@ -7,6 +7,7 @@ package socks4a
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"time"
@@ -77,7 +78,9 @@ func (r *Request) Request(fw *forwarder.Forwarder, _, seg bool) (restart bool, e
 	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
 	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
 	if seg {
-		_, err = fw.RightConn.SplitWrite(r.RequestData, 6)
+		i := bytes.Index(r.RequestData, []byte(r.DestHost))
+		i += len(r.DestHost) / 2
+		_, err = fw.RightConn.SplitWrite(r.RequestData, i)
 	} else {
 		_, err = fw.RightConn.Write(r.RequestData)
 	}
