@@ -101,6 +101,9 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 		}
 		if globalOnline && strategy == statichost.StaticNil {
 			GlobalHostStats.Update(h, v)
+			if restart {
+				GlobalHostStats.Update(h, v)
+			}
 		}
 		if ok || restart {
 			return ok
