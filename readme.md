@@ -25,6 +25,38 @@ start pd.exe -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0
 pd -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com -listens=192.168.2.1:6699 -direct=/etc/pd/direct -blocked=/etc/pd/blocked -statfile=/tmp/stat.json
 ```
 
+可以把启动命令写成启动脚本里，方便使用。多行写法如下：
+
+Windows bat
+```bat
+start pd.exe -proxies=^
+http://127.0.0.1:1080,^
+http://127.0.0.1:2080,^
+http://127.0.0.1:3080,^
+socks5://127.0.0.1:1081,^
+socks5://127.0.0.1:2081,^
+socks5://127.0.0.1:3081,^
+socks4a://127.0.0.1:2081 ^
+-netprobeurl=https://www.toutiao.com
+```
+
+*nix bash
+```sh
+pd -proxies=\
+http://127.0.0.1:1080,\
+http://127.0.0.1:2080,\
+http://127.0.0.1:3080,\
+socks5://127.0.0.1:1081,\
+socks5://127.0.0.1:2081,\
+socks5://127.0.0.1:3081,\
+socks4a://127.0.0.1:2081 \
+-netprobeurl=https://www.toutiao.com \
+-listens=192.168.2.1:6699 \
+-direct=/etc/pd/direct \
+-blocked=/etc/pd/blocked \
+-statfile=/tmp/stat.json
+```
+
 ## 支持
 * 静态规则：子域名优先。
 * 静态规则：`direct` > `blocked`.
@@ -131,6 +163,38 @@ start pd.exe -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0
 *nix serves for the LAN of a router
 ```sh
 pd -proxies=http://127.0.0.1:1080,http://127.0.0.1:2080,http://127.0.0.1:3080,socks5://127.0.0.1:1081,socks5://127.0.0.1:2081,socks5://127.0.0.1:3081,socks4a://127.0.0.1:2081 -netprobeurl=https://www.toutiao.com -listens=192.168.2.1:6699 -direct=/etc/pd/direct -blocked=/etc/pd/blocked -statfile=/tmp/stat.json
+```
+
+It is convenient to write the lauching command into a script. Multi-line format like this:
+
+Windows bat
+```bat
+start pd.exe -proxies=^
+http://127.0.0.1:1080,^
+http://127.0.0.1:2080,^
+http://127.0.0.1:3080,^
+socks5://127.0.0.1:1081,^
+socks5://127.0.0.1:2081,^
+socks5://127.0.0.1:3081,^
+socks4a://127.0.0.1:2081 ^
+-netprobeurl=https://www.toutiao.com
+```
+
+*nix bash
+```sh
+pd -proxies=\
+http://127.0.0.1:1080,\
+http://127.0.0.1:2080,\
+http://127.0.0.1:3080,\
+socks5://127.0.0.1:1081,\
+socks5://127.0.0.1:2081,\
+socks5://127.0.0.1:3081,\
+socks4a://127.0.0.1:2081 \
+-netprobeurl=https://www.toutiao.com \
+-listens=192.168.2.1:6699 \
+-direct=/etc/pd/direct \
+-blocked=/etc/pd/blocked \
+-statfile=/tmp/stat.json
 ```
 
 ## Dos
