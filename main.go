@@ -7,9 +7,7 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 
 	"github.com/lifenjoiner/pd/dispatcher"
 	"github.com/lifenjoiner/pd/hoststat"
@@ -34,18 +32,17 @@ func ServeFromConfig(config *Config) {
 		dispatcher.GlobalProxyPool = proxypool.InitProxyPool(svrConf.Proxies, svrConf.ProxyProbeURL, svrConf.UpstreamTimeout)
 	}()
 
+	var wg sync.WaitGroup
 	for _, listen := range config.Listens {
-		s := &tcp.Server{Addr: listen, Config: svrConf}
+		wg.Add(1)
+		s := &tcp.Server{WG: &wg, Addr: listen, Config: svrConf}
 		go s.ListenAndServe()
 	}
+	wg.Wait()
 }
 
 func main() {
 	cfg := parseConfig()
 	log.Printf("%v v%v - %v", name, version, description)
 	ServeFromConfig(cfg)
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
 }

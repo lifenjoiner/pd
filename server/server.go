@@ -5,8 +5,11 @@
 // Package server model.
 package server
 
+import "sync"
+
 // Server stores the pd server config.
 type Server struct {
+	WG     *sync.WaitGroup
 	Addr   string
 	Config *Config
 }
