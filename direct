@@ -1,1 +1,19 @@
+# exclusively for Internet infrastructure purposes
+arpa
+
+# Reserved TLDs: https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains
+alt
+example
+internal
+invalid
+local
 localhost
+onion
+test
+
+# ad hoc TLDs: https://en.wikipedia.org/wiki/List_of_Internet_top-level_domains#Internet_Engineering_Task_Force_proposals_for_local_TLDs
+intranet
+private
+corp
+home
+lan
