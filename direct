@@ -17,3 +17,14 @@ private
 corp
 home
 lan
+
+# pseudo-TLDs: https://en.wikipedia.org/wiki/Pseudo-top-level_domain
+exit
+tor
+i2p
+# blockchain
+eth
+crypto
+zil
+bit
+xlm
