@@ -200,10 +200,14 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	}
 
 	var goodConn goodConn
-	goodConn.n = len(IPs)
+	goodConn.n = 10 // max
+	if len(IPs) < goodConn.n {
+		goodConn.n = len(IPs)
+	}
+	start := int(time.Now().UnixMilli() % int64(len(IPs)))
 	waitChannel := make(chan struct{})
 	for i := 0; i < goodConn.n; i++ {
-		ip := IPs[i]
+		ip := IPs[(start+i)%goodConn.n]
 		go func() {
 			c, err := net.DialTimeout("tcp", net.JoinHostPort(ip, d.DestPort), d.Timeout)
 			goodConn.Lock()
