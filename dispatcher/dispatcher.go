@@ -359,7 +359,9 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 		log.Printf("%v <= %v", logPre, err)
 		if globalOnline && p != nil {
 			pp.UpdateProxy(p, 3*pp.Timeout)
-			pp.Sort()
+			if restart {
+				pp.Sort()
+			}
 		}
 	}
 	return restart, err
