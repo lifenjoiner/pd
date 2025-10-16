@@ -94,6 +94,6 @@ func ReceiveData(r *bufio.Reader) ([]byte, error) {
 // ConnSolver is the interface of Conn to solve the connection prerequisites to transfer the real data.
 // CONNECT to proxy. Maybe BIDN, UDP.
 type ConnSolver interface {
-	Bond(m, h, p string, b []byte) error
+	Bond(m, h, p string) error
 	GetConn() *Conn
 }

@@ -70,7 +70,7 @@ func (ck *TargetChecker) Check() (err error) {
 		if ck.Proxied != nil {
 			port := protocol.GetPort(pu)
 			if len(port) > 0 {
-				err = cs.Bond("CONNECT", pu.Hostname(), port, nil)
+				err = cs.Bond("CONNECT", pu.Hostname(), port)
 			} else {
 				err = errors.New("TargetChecker: unknown port for target")
 			}

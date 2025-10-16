@@ -341,7 +341,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	if err == nil {
 		c := conn.GetConn()
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), p.URL.Host)
-		err = conn.Bond(req.Command(), req.Hostname(), req.Port(), nil)
+		err = conn.Bond(req.Command(), req.Hostname(), req.Port())
 		if err == nil {
 			fw := &forwarder.Forwarder{
 				LeftAddr:  client.RemoteAddr(),

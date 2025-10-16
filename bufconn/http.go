@@ -28,12 +28,10 @@ func (c *HTTPConn) bondData(m, h, p string) ([]byte, error) {
 }
 
 // Bond bonds a HTTP connection with the server.
-func (c *HTTPConn) Bond(m, h, p string, b []byte) (err error) {
+func (c *HTTPConn) Bond(m, h, p string) error {
+	b, err := c.bondData(m, h, p)
 	if len(b) == 0 {
-		b, err = c.bondData(m, h, p)
-	}
-	if len(b) == 0 {
-		return
+		return err
 	}
 	_, err = c.Write(b)
 	if err == nil {

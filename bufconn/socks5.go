@@ -52,12 +52,10 @@ func (c *Socks5Conn) bondData(m, h, p string) ([]byte, error) {
 }
 
 // Bond bonds a socks5 connection with the server.
-func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
+func (c *Socks5Conn) Bond(m, h, p string) error {
+	b, err := c.bondData(m, h, p)
 	if len(b) == 0 {
-		b, err = c.bondData(m, h, p)
-	}
-	if len(b) == 0 {
-		return
+		return err
 	}
 	err = c.authorize()
 	if err == nil {
@@ -73,7 +71,7 @@ func (c *Socks5Conn) Bond(m, h, p string, b []byte) (err error) {
 			}
 		}
 	}
-	return
+	return err
 }
 
 // GetConn returns the packed `*Conn` from a `*Socks5Conn`.
