@@ -1,5 +1,5 @@
-# exclusively for Internet infrastructure purposes
-arpa
+# https://www.iana.org/domains/arpa
+home.arpa
 
 # Reserved TLDs: https://en.wikipedia.org/wiki/Top-level_domain#Reserved_domains
 alt
