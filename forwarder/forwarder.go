@@ -85,7 +85,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 			if LrErr == nil {
 				if TLSStageRight == TLSHandshake && LeftBuf[0] == TLSApplication && n > 1 && LeftBuf[1] == 0x03 {
 					// Request data is sent. Some server may response slowly: snapshot downloading from https://repo.or.cz
-					//log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
+					// log.Printf("[forwarder] TLS Application data is got: %v --> %v", fw.LeftAddr, fw.RightAddr)
 					LeftTimeout = LeftTLSAlive
 					RightTimeout = RightTLSAlive
 				}
@@ -124,9 +124,10 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
 		if RrErr == nil {
 			// RightBuf has enough space.
-			if TLSStageRight == 0x00 {
+			switch TLSStageRight {
+			case 0x00:
 				TLSStageRight = RightBuf[0]
-				if !(RightBuf[0] == TLSHandshake && n > 1 && RightBuf[1] == 0x03) {
+				if RightBuf[0] != TLSHandshake || n < 2 || RightBuf[1] != 0x03 {
 					gotRightData = true
 					//} else {
 					// TLS v1.2, a: ServerHello + Certificate + ServerKeyExchange + ServerHelloDone
@@ -134,7 +135,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 					// TLS v1.3: ServerHello + ChangeCipherSpec + ApplicationData
 					//log.Printf("[forwarder] TLS server Handshake data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
 				}
-			} else if TLSStageRight == TLSHandshake {
+			case TLSHandshake:
 				if (RightBuf[0] == TLSHandshake || RightBuf[0] == TLSChangeCipher) && n > 1 && RightBuf[1] == 0x03 {
 					// TLS v1.2, a: [NewSessionTicket + ]ChangeCipherSpec + EncryptedHandshakeMessage
 					// Weixin server sleeps (25s) before sending application data for heartbeats.
@@ -142,7 +143,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 					RightTimeout = RightTLSAlive
 				} else if RightBuf[0] == TLSApplication && n > 1 && RightBuf[1] == 0x03 {
 					// Response data is received.
-					//log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
+					// log.Printf("[forwarder] TLS Application data is got: %v <-- %v", fw.LeftAddr, fw.RightAddr)
 					TLSStageRight = TLSApplication
 					gotRightData = true
 					LeftTimeout = LeftTLSAlive

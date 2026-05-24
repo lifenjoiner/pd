@@ -18,7 +18,7 @@ func TestHostStats(t *testing.T) {
 	h := "github.com:https"
 	//
 	hs = &HostStats{}
-	os.Remove(file)
+	_ = os.Remove(file)
 	hs.Load(file)
 	//
 	N := 10
@@ -45,8 +45,8 @@ func TestHostStats(t *testing.T) {
 	}
 	//
 	hs = &HostStats{Stats: make(map[string]*HostStat)}
-	var tests = [20]float64{1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0}
-	var ewmas = [20]float64{1.00, 0.33, 0.17, 0.50, 0.33, 0.52, 0.64, 0.72, 0.78, 0.64, 0.52, 0.43, 0.35, 0.47, 0.38, 0.49, 0.59, 0.66, 0.72, 0.59}
+	tests := [20]float64{1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0}
+	ewmas := [20]float64{1.00, 0.33, 0.17, 0.50, 0.33, 0.52, 0.64, 0.72, 0.78, 0.64, 0.52, 0.43, 0.35, 0.47, 0.38, 0.49, 0.59, 0.66, 0.72, 0.59}
 	for i := 0; i < 20; i++ {
 		hs.Update(h, tests[i])
 		st := hs.GetStat(h)

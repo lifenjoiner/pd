@@ -138,7 +138,7 @@ func (hs *HostStats) Save(file string) {
 		data = []byte("{}")
 	}
 
-	err = os.WriteFile(file, []byte(data), 0666)
+	err = os.WriteFile(file, []byte(data), 0o666)
 	if err != nil {
 		log.Printf("[hoststats] %v", err)
 	}

@@ -21,7 +21,7 @@ import (
 type Request struct {
 	Ver byte
 	Cmd byte
-	//AddrType    byte
+	// AddrType    byte
 	DestHost    string
 	DestPort    string
 	PacketData  socks.Packet

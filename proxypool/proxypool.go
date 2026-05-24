@@ -17,8 +17,10 @@ import (
 	"github.com/lifenjoiner/pd/checker"
 )
 
-const ewmaSlide int = 10
-const updateInterval time.Duration = 3 * time.Minute
+const (
+	ewmaSlide      int           = 10
+	updateInterval time.Duration = 3 * time.Minute
+)
 
 // Proxy stores the upstream proxy(socks/http, h3) settings.
 type Proxy struct {

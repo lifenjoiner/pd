@@ -33,7 +33,7 @@ func (s *Server) ListenAndServe() {
 		log.Printf("[tcp] failed to listen on %s: %v\n", s.Addr, err)
 		return
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 
 	log.Printf("[tcp] listening on %s\n", s.Addr)
 	for {
@@ -49,7 +49,7 @@ func (s *Server) ListenAndServe() {
 
 // Serve serves 1 client.
 func (s *Server) Serve(c *bufconn.Conn) {
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	_ = c.SetDeadline(time.Now().Add(2 * s.Config.UpstreamTimeout))
 
 	data, err := c.R.Peek(1)

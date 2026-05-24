@@ -42,7 +42,7 @@ type Dispatcher struct {
 	DestPort     string
 	Timeout      time.Duration
 	ParallelDial bool
-	//local
+	// local
 	maxTry      int
 	tried       int
 	directWave  float64
@@ -222,7 +222,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 			} else if err == nil {
 				// ESTABLISHED
 				_ = c.SetDeadline(time.Now())
-				c.Close()
+				_ = c.Close()
 			}
 			goodConn.n--
 			goodConn.Unlock()
@@ -264,7 +264,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, pp *proxypool.Proxy
 		}
 		c := cs.GetConn()
 		_ = c.SetDeadline(time.Now())
-		c.Close()
+		_ = c.Close()
 		err = errors.New("proxy authentication is not implemented")
 	} else {
 		err = errors.New("no valid proxy")
@@ -305,7 +305,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 			Wave:      wave,
 		}
 		restart, err = req.Request(fw, false, d.tried == d.maxTry>>1)
-		c.Close()
+		_ = c.Close()
 	} else if IsDNSErr(err) {
 		// Trust the specified DNS.
 		// If the DNS isn't reliable enough, place a host in `blocked` to go proxied directly.
@@ -353,7 +353,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 			}
 			restart, err = req.Request(fw, true, false)
 		}
-		c.Close()
+		_ = c.Close()
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)

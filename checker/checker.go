@@ -53,7 +53,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 // Check checks if the target responses succeeded.
 func (ck *TargetChecker) Check() (err error) {
 	var cs bufconn.ConnSolver
-	switch ck.URL.Scheme {
+	switch ck.Scheme {
 	case "http", "https":
 		cs, err = bufconn.DialHTTP(ck.URL, ck.Timeout)
 	case "socks5":
@@ -61,7 +61,7 @@ func (ck *TargetChecker) Check() (err error) {
 	case "socks4a":
 		cs, err = bufconn.DialSocks4a(ck.URL, ck.Timeout)
 	default:
-		err = errors.New("TargetChecker: unknown proxy scheme: " + ck.URL.Scheme)
+		err = errors.New("TargetChecker: unknown proxy scheme: " + ck.Scheme)
 		return
 	}
 	if err == nil {
@@ -80,7 +80,7 @@ func (ck *TargetChecker) Check() (err error) {
 			err = ck.Transfer()
 		}
 		_ = conn.SetDeadline(time.Now())
-		conn.Close()
+		_ = conn.Close()
 	}
 	return
 }
