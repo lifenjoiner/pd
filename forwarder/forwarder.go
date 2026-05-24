@@ -39,7 +39,7 @@ type Forwarder struct {
 // For high/full speed traffic calling WSARecv/WSASend.
 // 4k for direct `ReadFrom` is observed, and high CPU usage.
 const (
-	maxBufferSize int = 1024 * 1000
+	maxBufferSize int = 1024 * 1600
 	minBufferSize int = 1024 * 100
 )
 
@@ -78,7 +78,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 		LeftBuf := *leftBufPtr
 		for {
 			if x := cap(LeftBuf); n == x && x < maxBufferSize {
-				LeftBuf = make([]byte, x+minBufferSize)
+				LeftBuf = make([]byte, 2*x)
 			}
 			_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
 			n, LrErr = fw.LeftConn.R.Read(LeftBuf)
@@ -118,7 +118,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 	RightBuf := *rightBufPtr
 	for {
 		if x := cap(RightBuf); n == x && x < maxBufferSize {
-			RightBuf = make([]byte, x+minBufferSize)
+			RightBuf = make([]byte, 2*x)
 		}
 		_ = fw.RightConn.SetDeadline(time.Now().Add(RightTimeout))
 		n, RrErr = fw.RightConn.R.Read(RightBuf)
