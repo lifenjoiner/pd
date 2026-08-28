@@ -176,7 +176,7 @@ func (d *Dispatcher) DispatchByStats() {
 // goodConn is the helper struct for DispatchIP.
 type goodConn struct {
 	sync.RWMutex
-	c   net.Conn
+	c   *bufconn.Conn
 	err error
 	n   int
 }
@@ -184,11 +184,7 @@ type goodConn struct {
 // DispatchIP gets the quickest responded IP for a direct connection.
 func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	if !d.ParallelDial || (d.tried < 1 && d.maxTry > 1) || statichost.HostIsIP(d.DestHost) {
-		c, err := net.DialTimeout("tcp", net.JoinHostPort(d.DestHost, d.DestPort), d.Timeout)
-		if err != nil {
-			return nil, err
-		}
-		return bufconn.NewConn(c), nil
+		return bufconn.DialTimeout("tcp", net.JoinHostPort(d.DestHost, d.DestPort), d.Timeout)
 	}
 
 	// DNS/host filtering results host to "0.0.0.0" or "127.0.0.1".
@@ -209,7 +205,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	for i := 0; i < goodConn.n; i++ {
 		ip := IPs[(start+i)%goodConn.n]
 		go func() {
-			c, err := net.DialTimeout("tcp", net.JoinHostPort(ip, d.DestPort), d.Timeout)
+			c, err := bufconn.DialTimeout("tcp", net.JoinHostPort(ip, d.DestPort), d.Timeout)
 			goodConn.Lock()
 			if goodConn.c == nil {
 				if err == nil { // bad ip returns fast too
@@ -230,16 +226,7 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 	}
 
 	<-waitChannel
-	var conn *bufconn.Conn
-	goodConn.RLock()
-	if goodConn.c != nil {
-		conn = bufconn.NewConn(goodConn.c)
-	} else {
-		err = goodConn.err
-	}
-	goodConn.RUnlock()
-
-	return conn, err
+	return goodConn.c, goodConn.err
 }
 
 // DispatchProxy gets the best proxy Conn.

@@ -50,8 +50,8 @@ func NewConn(c net.Conn) *Conn {
 	return cc
 }
 
-// Dial dials the address with timeout.
-func Dial(network, address string, timeout time.Duration) (*Conn, error) {
+// DialTimeout dials the address with timeout.
+func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
 	c, err := net.DialTimeout(network, address, timeout)
 	var conn *Conn
 	if err == nil {
@@ -71,7 +71,7 @@ func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
 	if u.Scheme == "h3" {
 		n = "udp"
 	}
-	return Dial(n, a, d)
+	return DialTimeout(n, a, d)
 }
 
 // ReadData is non-blocking.
