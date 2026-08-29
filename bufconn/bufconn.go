@@ -7,6 +7,7 @@ package bufconn
 
 import (
 	"bufio"
+	"errors"
 	"net"
 	"net/url"
 	"time"
@@ -63,15 +64,15 @@ func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) 
 
 // DialURL dials the URL with timeout.
 func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
-	a := u.Host
+	h := u.Host
 	if len(u.Port()) == 0 {
-		a += ":" + u.Scheme
+		h += ":" + u.Scheme
 	}
 	n := "tcp"
 	if u.Scheme == "h3" {
 		n = "udp"
 	}
-	return DialTimeout(n, a, d)
+	return DialTimeout(n, h, d)
 }
 
 // ReadData is non-blocking.
@@ -96,4 +97,19 @@ func ReceiveData(r *bufio.Reader) ([]byte, error) {
 type ConnSolver interface {
 	Bond(m, h, p string) error
 	GetConn() *Conn
+}
+
+// DialProxyTimeout dials the URL with timeout.
+func DialProxyTimeout(u *url.URL, d time.Duration) (cs ConnSolver, err error) {
+	switch u.Scheme {
+	case "http", "https":
+		cs, err = DialHTTP(u, d)
+	case "socks5":
+		cs, err = DialSocks5(u, d)
+	case "socks4a":
+		cs, err = DialSocks4a(u, d)
+	default:
+		err = errors.New("Unknown proxy scheme: " + u.Scheme)
+	}
+	return
 }

@@ -238,14 +238,7 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, pp *proxypool.Proxy
 	}
 	p = pp.GetProxy(d.proxyTried)
 	if p.URL != nil {
-		switch d.ServerType {
-		case "http":
-			cs, err = bufconn.DialHTTP(p.URL, pp.Timeout)
-		case "socks5":
-			cs, err = bufconn.DialSocks5(p.URL, pp.Timeout)
-		case "socks4a":
-			cs, err = bufconn.DialSocks4a(p.URL, pp.Timeout)
-		}
+		cs, err = bufconn.DialProxyTimeout(p.URL, pp.Timeout)
 		if p.URL.User == nil {
 			return
 		}
