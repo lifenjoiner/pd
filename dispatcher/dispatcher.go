@@ -93,7 +93,9 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	ok := false
 	v := 0.0
 	h := d.DestHost + ":" + d.DestPort
+	timeoutEx := d.Timeout + 100*time.Millisecond // + IsInvalid()
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
+		_ = d.Client.SetDeadline(time.Now().Add(timeoutEx))
 		restart, err = d.ServeDirect(req)
 		if err == nil {
 			ok = true
@@ -105,17 +107,18 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 				GlobalHostStats.Update(h, v)
 			}
 		}
-		if ok || restart {
+		if ok || restart || d.Client.IsInvalid() {
 			return ok
 		}
 		// dialing or receiving ServerHello failed
 	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
+		_ = d.Client.SetDeadline(time.Now().Add(timeoutEx))
 		restart, err = d.ServeProxied(req)
 		if err == nil {
 			return true
-		} else if restart {
+		} else if restart || d.Client.IsInvalid() {
 			return false
 		}
 	}
@@ -256,7 +259,6 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, pp *proxypool.Proxy
 func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Host())
-	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	var leftTran forwarder.Transformer
 	if req.Command() == "CONNECT" {
 		err := req.GetRequest(client, client.R)
@@ -286,7 +288,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		}
 		restart, err = req.Request(fw, false, d.tried == d.maxTry>>1)
 		_ = c.Close()
-	} else if IsDNSErr(err) {
+	} else if bufconn.IsDNSErr(err) {
 		// Trust the specified DNS.
 		// If the DNS isn't reliable enough, place a host in `blocked` to go proxied directly.
 		// Host mapping `0.0.0.0` or `::` error: The requested name is valid, but no data of the requested type was found.
@@ -308,7 +310,6 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Host())
-	_ = client.SetDeadline(time.Now().Add(2 * d.Timeout))
 	if req.Command() == "CONNECT" {
 		err := req.GetRequest(client, client.R)
 		if err != nil {

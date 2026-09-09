@@ -101,7 +101,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 				_, RwErr = fw.RightConn.Write(data)
 			}
 			if LrErr != nil || LwErr != nil || RrErr != nil || RwErr != nil {
-				if isReset(LrErr) || isTimeout(LrErr) {
+				if bufconn.IsReset(LrErr) || bufconn.IsTimeout(LrErr) {
 					_ = fw.RightConn.SetDeadline(time.Now())
 				}
 				_ = fw.LeftConn.SetDeadline(time.Now().Add(LeftTimeout))
@@ -172,7 +172,7 @@ func (fw *Forwarder) Tunnel() (bool, error) {
 
 	_ = fw.RightConn.SetDeadline(time.Now())
 	_ = fw.LeftConn.SetDeadline(time.Now())
-	ok := gotRightData || isReset(LrErr) || isEOF(LrErr)
+	ok := gotRightData || bufconn.IsReset(LrErr) || bufconn.IsEOF(LrErr)
 	//log.Print(LrErr)
 	//log.Print(LwErr)
 	//log.Print(RrErr)

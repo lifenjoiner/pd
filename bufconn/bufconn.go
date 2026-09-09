@@ -45,6 +45,11 @@ func (c *Conn) SplitWrite(b []byte, x int) (n int, err error) {
 	return
 }
 
+func (c *Conn) IsInvalid() bool {
+	_, err := c.R.Peek(1)
+	return IsInvalid(err)
+}
+
 // NewConn packs a `net.Conn` into a new `Conn`.
 func NewConn(c net.Conn) *Conn {
 	cc := &Conn{c, bufio.NewReader(c)}
