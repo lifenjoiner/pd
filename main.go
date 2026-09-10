@@ -9,6 +9,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/lifenjoiner/pd/bufconn"
 	"github.com/lifenjoiner/pd/dispatcher"
 	"github.com/lifenjoiner/pd/hoststat"
 	"github.com/lifenjoiner/pd/proxypool"
@@ -44,5 +45,13 @@ func ServeFromConfig(config *Config) {
 func main() {
 	cfg := parseConfig()
 	log.Printf("%v v%v - %v", name, version, description)
+	if cfg.OutBind != "" {
+		var err error
+		bufconn.DialerConf, err = bufconn.NewDirect(cfg.OutBind)
+		if err != nil {
+			log.Printf("%v", err)
+			return
+		}
+	}
 	ServeFromConfig(cfg)
 }

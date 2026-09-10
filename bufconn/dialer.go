@@ -7,14 +7,166 @@ package bufconn
 
 import (
 	"errors"
+	// "log"
 	"net"
+	"net/netip"
 	"net/url"
 	"time"
 )
 
+// Direct dialer.
+type Direct struct {
+	Interface *net.Interface
+	IP        net.IP
+}
+
+// DialerConf is the global dialer.
+var DialerConf = &Direct{}
+
+// NewDirect returns a Direct dialer.
+func NewDirect(filter string) (d *Direct, err error) {
+	d = &Direct{}
+	if filter != "" {
+		if ip := net.ParseIP(filter); ip != nil {
+			d.IP = ip
+		} else {
+			var ifi *net.Interface
+			ifi, err = net.InterfaceByName(filter)
+			if err == nil {
+				d.Interface = ifi
+			} else {
+				err = errors.New(err.Error() + ": " + filter)
+			}
+		}
+	}
+	return
+}
+
+// DialTimeout dials with timeout. net.Dialer doesn't have this method.
+func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c net.Conn, err error) {
+	ipVer := ipVersion(getAddressIP(address))
+	useIP := d.IP != nil
+	if useIP {
+		useIP = ipVer == 0 || ipVer == ipVersion(d.IP)
+		if !useIP {
+			err = errors.New("DialTimeout: IP version mismatch")
+		}
+	}
+	if useIP || d.Interface == nil {
+		// log.Printf("ip: %s", d.IP)
+		c, err = d.dialTimeout(network, address, d.IP, timeout)
+		if err == nil {
+			return
+		}
+	}
+	if d.Interface == nil {
+		return
+	}
+
+	ips := d.InterfaceOuterIPs()
+	if len(ips) == 0 {
+		err = errors.New("DialTimeout: can't get IPs of interface: " + d.Interface.Name)
+		return
+	}
+	for _, ip := range ips {
+		if ipVer != 0 && (ipVer != ipVersion(ip) || ip.Equal(d.IP)) {
+			continue
+		}
+		// log.Printf("name: %v", ip)
+		c, err = d.dialTimeout(network, address, ip, timeout)
+		if err == nil {
+			d.IP = ip // reuse?
+			return
+		}
+	}
+
+	return
+}
+
+func (d *Direct) dialTimeout(network, address string, ip net.IP, timeout time.Duration) (net.Conn, error) {
+	dialer := &net.Dialer{Timeout: timeout}
+	if ip != nil {
+		switch network {
+		case "tcp":
+			dialer.LocalAddr = &net.TCPAddr{IP: ip}
+		case "udp":
+			dialer.LocalAddr = &net.UDPAddr{IP: ip}
+		}
+	}
+
+	if d.Interface != nil {
+		dialer.Control = bindToDevice(d.Interface)
+	}
+
+	return dialer.Dial(network, address)
+}
+
+// InterfaceOuterIPs returns ip addresses of the specified interface.
+func (d *Direct) InterfaceOuterIPs() (ips []net.IP) {
+	ipNets, err := d.Interface.Addrs()
+	if err != nil {
+		return
+	}
+	// log.Printf("%v", ipNets)
+	var (
+		ipv6 net.IP
+		ipv4 net.IP
+	)
+	for _, ipNet := range ipNets {
+		ip := ipNet.(*net.IPNet).IP
+		if ip.IsLinkLocalUnicast() { // not link-local IPv6
+			continue
+		}
+		// Prefer temporary IPv6 for privacy. Is Global Unicast got earlier?
+		switch ipVersion(ip) {
+		case '6':
+			ipv6 = ip
+		case '4':
+			ipv4 = ip
+		}
+	}
+	if ipv6 != nil {
+		ips = append(ips, ipv6)
+	}
+	if ipv4 != nil {
+		ips = append(ips, ipv4)
+	}
+	// log.Printf("%v", ips)
+	return
+}
+
+func getAddressIP(address string) net.IP {
+	h, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil
+	}
+	return net.ParseIP(h)
+}
+
+func isLoopback(address string) bool {
+	ip := getAddressIP(address)
+	return ip != nil && ip.IsLoopback()
+}
+
+func ipVersion(ip net.IP) byte {
+	ip2, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return 0
+	} else if ip2.Is4() {
+		return '4'
+	} else {
+		return '6'
+	}
+}
+
 // DialTimeout dials the address with timeout.
 func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
-	c, err := net.DialTimeout(network, address, timeout)
+	d := &Direct{}
+	if !isLoopback(address) {
+		d.Interface = DialerConf.Interface
+		d.IP = DialerConf.IP
+	}
+	c, err := d.DialTimeout(network, address, timeout)
 	var conn *Conn
 	if err == nil {
 		_ = c.SetDeadline(time.Now().Add(timeout))
@@ -22,6 +174,8 @@ func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) 
 	}
 	return conn, err
 }
+
+// OS do Parallel Queries to DNS of all interfaces!
 
 // DialURL dials the URL with timeout.
 func DialURL(u *url.URL, d time.Duration) (*Conn, error) {
