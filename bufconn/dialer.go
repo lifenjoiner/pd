@@ -14,26 +14,32 @@ import (
 	"time"
 )
 
-// Direct dialer.
-type Direct struct {
+// Bind config.
+type BindConf struct {
 	Interface *net.Interface
 	IP        net.IP
 }
 
-// DialerConf is the global dialer.
-var DialerConf = &Direct{}
+// Direct dialer.
+type Direct struct {
+	BindConf
+	nd net.Dialer
+}
+
+// BindConf is the bind interface config for dialer.
+var BindCfg = &BindConf{}
 
 // NewDirect returns a Direct dialer.
-func NewDirect(filter string) (d *Direct, err error) {
-	d = &Direct{}
+func NewBindConf(filter string) (b *BindConf, err error) {
+	b = &BindConf{}
 	if filter != "" {
 		if ip := net.ParseIP(filter); ip != nil {
-			d.IP = ip
+			b.IP = ip
 		} else {
 			var ifi *net.Interface
 			ifi, err = net.InterfaceByName(filter)
 			if err == nil {
-				d.Interface = ifi
+				b.Interface = ifi
 			} else {
 				err = errors.New(err.Error() + ": " + filter)
 			}
@@ -44,17 +50,23 @@ func NewDirect(filter string) (d *Direct, err error) {
 
 // DialTimeout dials with timeout. net.Dialer doesn't have this method.
 func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c net.Conn, err error) {
+	d.nd.Timeout = timeout
+	return d.Dial(network, address)
+}
+
+// DialTimeout dials with timeout. net.Dialer doesn't have this method.
+func (d *Direct) Dial(network, address string) (c net.Conn, err error) {
 	ipVer := ipVersion(getAddressIP(address))
 	useIP := d.IP != nil
 	if useIP {
 		useIP = ipVer == 0 || ipVer == ipVersion(d.IP)
 		if !useIP {
-			err = errors.New("DialTimeout: IP version mismatch")
+			err = errors.New("Dial: IP version mismatch")
 		}
 	}
 	if useIP || d.Interface == nil {
 		// log.Printf("ip: %s", d.IP)
-		c, err = d.dialTimeout(network, address, d.IP, timeout)
+		c, err = d.dial(network, address, d.IP)
 		if err == nil {
 			return
 		}
@@ -65,7 +77,7 @@ func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c 
 
 	ips := d.InterfaceOuterIPs()
 	if len(ips) == 0 {
-		err = errors.New("DialTimeout: can't get IPs of interface: " + d.Interface.Name)
+		err = errors.New("Dial: can't get IPs of interface: " + d.Interface.Name)
 		return
 	}
 	for _, ip := range ips {
@@ -73,7 +85,7 @@ func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c 
 			continue
 		}
 		// log.Printf("name: %v", ip)
-		c, err = d.dialTimeout(network, address, ip, timeout)
+		c, err = d.dial(network, address, ip)
 		if err == nil {
 			d.IP = ip // reuse?
 			return
@@ -83,22 +95,21 @@ func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c 
 	return
 }
 
-func (d *Direct) dialTimeout(network, address string, ip net.IP, timeout time.Duration) (net.Conn, error) {
-	dialer := &net.Dialer{Timeout: timeout}
+func (d *Direct) dial(network, address string, ip net.IP) (net.Conn, error) {
 	if ip != nil {
 		switch network {
 		case "tcp":
-			dialer.LocalAddr = &net.TCPAddr{IP: ip}
+			d.nd.LocalAddr = &net.TCPAddr{IP: ip}
 		case "udp":
-			dialer.LocalAddr = &net.UDPAddr{IP: ip}
+			d.nd.LocalAddr = &net.UDPAddr{IP: ip}
 		}
 	}
 
 	if d.Interface != nil {
-		dialer.Control = bindToDevice(d.Interface)
+		d.nd.Control = bindToDevice(d.Interface)
 	}
 
-	return dialer.Dial(network, address)
+	return d.nd.Dial(network, address)
 }
 
 // InterfaceOuterIPs returns ip addresses of the specified interface.
@@ -163,8 +174,8 @@ func ipVersion(ip net.IP) byte {
 func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
 	d := &Direct{}
 	if !isLoopback(address) {
-		d.Interface = DialerConf.Interface
-		d.IP = DialerConf.IP
+		d.Interface = BindCfg.Interface
+		d.IP = BindCfg.IP
 	}
 	c, err := d.DialTimeout(network, address, timeout)
 	var conn *Conn

@@ -47,7 +47,7 @@ func main() {
 	log.Printf("%v v%v - %v", name, version, description)
 	if cfg.OutBind != "" {
 		var err error
-		bufconn.DialerConf, err = bufconn.NewDirect(cfg.OutBind)
+		bufconn.BindCfg, err = bufconn.NewBindConf(cfg.OutBind)
 		if err != nil {
 			log.Printf("%v", err)
 			return
