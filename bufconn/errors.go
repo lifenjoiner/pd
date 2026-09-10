@@ -41,6 +41,6 @@ func IsEOF(err error) bool {
 }
 
 // IsReset tests if the conn is valid.
-func IsInvalid(err error) bool {
+func IsClosed(err error) bool {
 	return IsReset(err) || IsEOF(err)
 }

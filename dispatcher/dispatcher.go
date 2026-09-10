@@ -93,9 +93,7 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 	ok := false
 	v := 0.0
 	h := d.DestHost + ":" + d.DestPort
-	timeoutEx := d.Timeout + 100*time.Millisecond // + IsInvalid()
 	for d.tried = 0; d.tried < d.maxTry; d.tried++ {
-		_ = d.Client.SetDeadline(time.Now().Add(timeoutEx))
 		restart, err = d.ServeDirect(req)
 		if err == nil {
 			ok = true
@@ -107,18 +105,17 @@ func (d *Dispatcher) Dispatch(req protocol.Requester) bool {
 				GlobalHostStats.Update(h, v)
 			}
 		}
-		if ok || restart || d.Client.IsInvalid() {
+		if ok || restart {
 			return ok
 		}
 		// dialing or receiving ServerHello failed
 	}
 
 	for d.proxyTried = 0; d.proxyTried < d.maxProxyTry; d.proxyTried++ {
-		_ = d.Client.SetDeadline(time.Now().Add(timeoutEx))
 		restart, err = d.ServeProxied(req)
 		if err == nil {
 			return true
-		} else if restart || d.Client.IsInvalid() {
+		} else if restart {
 			return false
 		}
 	}
@@ -302,6 +299,11 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	}
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
+		if ok, err2 := client.IsClosed(); ok {
+			log.Printf("%v <+ %v", logPre, err2)
+			restart = true
+			err = err2
+		}
 	}
 	return restart, err
 }
@@ -343,6 +345,11 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 			if restart {
 				pp.Sort()
 			}
+		}
+		if ok, err2 := client.IsClosed(); ok {
+			log.Printf("%v <+ %v", logPre, err2)
+			restart = true
+			err = err2
 		}
 	}
 	return restart, err

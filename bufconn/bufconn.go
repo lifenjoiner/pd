@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Conn is a connection with bufio reader.
+// Conn is a deadline sensitive connection with bufio reader. Set the deadline before each IO.
 type Conn struct {
 	net.Conn
 	R *bufio.Reader
@@ -45,9 +45,10 @@ func (c *Conn) SplitWrite(b []byte, x int) (n int, err error) {
 	return
 }
 
-func (c *Conn) IsInvalid() bool {
+func (c *Conn) IsClosed() (bool, error) {
+	_ = c.SetDeadline(time.Now().Add(100 * time.Millisecond))
 	_, err := c.R.Peek(1)
-	return IsInvalid(err)
+	return IsClosed(err), err
 }
 
 // NewConn packs a `net.Conn` into a new `Conn`.
