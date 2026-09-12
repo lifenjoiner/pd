@@ -107,7 +107,7 @@ func (c *Conn) Close() error {
 
 // IsClosed returns if the connection is closed and reason.
 func (c *Conn) IsClosed() (bool, error) {
-	_ = c.SetDeadline(time.Now().Add(100 * time.Millisecond))
+	_ = c.SetDeadline(time.Now().Add(time.Millisecond))
 	_, err := c.R.Peek(1)
 	return IsClosed(err), err
 }
