@@ -73,34 +73,34 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 
 // Request to a upstream server.
 func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error) {
-	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
-	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
+	cr := fw.RightConn
 	if r.Method == "CONNECT" {
 		if len(r.TLSData) > 0 {
 			if seg {
 				h := []byte(r.URL.Hostname())
 				i := bytes.Index(r.TLSData, h)
 				i += len(h) / 2
-				_, err = fw.RightConn.SplitWrite(r.TLSData, i)
+				_, err = cr.SplitWrite(r.TLSData, i)
 			} else {
-				_, err = fw.RightConn.Write(r.TLSData)
+				_, err = cr.Write(r.TLSData)
 			}
 		} else {
 			// drop it
 			return false, nil
 		}
 	} else {
+		cr.SetWriteDeadline(time.Now().Add(cr.Timeout))
 		if seg {
-			err = r.writeRequest(fw.RightConn, proxy)
+			err = r.writeRequest(cr, proxy)
 		} else {
 			bw := &bytes.Buffer{}
 			err = r.writeRequest(bw, proxy)
 			if err == nil {
-				_, err = fw.RightConn.Write(bw.Bytes())
+				_, err = cr.Write(bw.Bytes())
 			}
 		}
 		if err == nil && len(r.PostData) > 0 {
-			_, err = fw.RightConn.Write(r.PostData)
+			_, err = cr.Write(r.PostData)
 		}
 	}
 	if err == nil {
@@ -177,7 +177,7 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 		return nil, err
 	}
 
-	r.PostData, err = bufconn.ReadData(rd)
+	r.PostData, err = bufconn.ReadAll(rd)
 
 	return
 }

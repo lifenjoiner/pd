@@ -17,7 +17,7 @@ import (
 type Socks5Conn Conn
 
 func (c *Socks5Conn) authorize() (err error) {
-	_, err = c.Write([]byte{5, 1, 0})
+	_, err = c.GetConn().Write([]byte{5, 1, 0})
 	if err != nil {
 		return
 	}
@@ -59,7 +59,8 @@ func (c *Socks5Conn) Bond(m, h, p string) error {
 	}
 	err = c.authorize()
 	if err == nil {
-		_, err = c.Write(b)
+		cc := c.GetConn()
+		_, err = cc.Write(b)
 		if err == nil {
 			var b socks.Packet
 			b, err = ReceiveData(c.R)

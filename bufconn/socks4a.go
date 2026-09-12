@@ -46,7 +46,8 @@ func (c *Socks4aConn) Bond(m, h, p string) error {
 	if len(b) == 0 {
 		return err
 	}
-	_, err = c.Write(b)
+	cc := c.GetConn()
+	_, err = cc.Write(b)
 	if err == nil {
 		var b socks.Packet
 		b, err = ReceiveData(c.R)

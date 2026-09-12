@@ -29,7 +29,6 @@ func (ck *TargetChecker) Transfer() (err error) {
 	if u == nil {
 		u = ck.URL
 	}
-	_ = conn.SetDeadline(time.Now().Add(ck.Timeout))
 	switch u.Scheme {
 	case "https":
 		_, err = conn.Write([]byte("\x15\x03\x03\x00\x01\x00"))
@@ -69,7 +68,6 @@ func (ck *TargetChecker) Check() (err error) {
 			ck.Conn = conn
 			err = ck.Transfer()
 		}
-		_ = conn.SetDeadline(time.Now())
 		_ = conn.Close()
 	}
 	return

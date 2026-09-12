@@ -42,7 +42,7 @@ func (s *Server) ListenAndServe() {
 			log.Printf("[tcp] failed to accept: %v\n", err)
 			continue
 		}
-		cc := bufconn.NewConn(c)
+		cc := bufconn.NewConn(c, s.Config.UpstreamTimeout)
 		go s.Serve(cc)
 	}
 }
@@ -50,13 +50,14 @@ func (s *Server) ListenAndServe() {
 // Serve serves 1 client.
 func (s *Server) Serve(c *bufconn.Conn) {
 	defer func() { _ = c.Close() }()
-	_ = c.SetDeadline(time.Now().Add(2 * s.Config.UpstreamTimeout))
 
-	data, err := c.R.Peek(1)
+	data, err := c.Peek(1)
+
 	if err != nil {
 		log.Printf("[tcp] drop %v, error: %v", c.RemoteAddr(), err)
 		return
 	}
+	c.SetDeadline(time.Now().Add(c.Timeout))
 	switch data[0] {
 	case 5:
 		socks5 := (*socks5.Server)(s)

@@ -33,7 +33,7 @@ func (c *HTTPConn) Bond(m, h, p string) error {
 	if len(b) == 0 {
 		return err
 	}
-	_, err = c.Write(b)
+	_, err = c.GetConn().Write(b)
 	if err == nil {
 		var line string
 		var ok, eoh bool

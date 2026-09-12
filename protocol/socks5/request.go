@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"time"
 
 	"github.com/lifenjoiner/pd/bufconn"
 	"github.com/lifenjoiner/pd/forwarder"
@@ -76,14 +75,13 @@ func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
 
 // Request to a upstream server.
 func (r *Request) Request(fw *forwarder.Forwarder, _, seg bool) (restart bool, err error) {
-	_ = fw.LeftConn.SetDeadline(time.Now().Add(2 * fw.Timeout))
-	_ = fw.RightConn.SetDeadline(time.Now().Add(fw.Timeout))
+	cr := fw.RightConn
 	if seg {
 		i := bytes.Index(r.RequestData, []byte(r.DestHost))
 		i += len(r.DestHost) / 2
-		_, err = fw.RightConn.SplitWrite(r.RequestData, i)
+		_, err = cr.SplitWrite(r.RequestData, i)
 	} else {
-		_, err = fw.RightConn.Write(r.RequestData)
+		_, err = cr.Write(r.RequestData)
 	}
 	if err == nil {
 		restart, err = fw.Tunnel()

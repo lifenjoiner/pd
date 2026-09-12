@@ -217,7 +217,6 @@ func (d *Dispatcher) DispatchIP() (*bufconn.Conn, error) {
 				}
 			} else if err == nil {
 				// ESTABLISHED
-				_ = c.SetDeadline(time.Now())
 				_ = c.Close()
 			}
 			goodConn.n--
@@ -243,7 +242,6 @@ func (d *Dispatcher) DispatchProxy() (cs bufconn.ConnSolver, pp *proxypool.Proxy
 			return
 		}
 		c := cs.GetConn()
-		_ = c.SetDeadline(time.Now())
 		_ = c.Close()
 		err = errors.New("proxy authentication is not implemented")
 	} else {
