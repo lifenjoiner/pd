@@ -56,15 +56,19 @@ func (d *Direct) DialTimeout(network, address string, timeout time.Duration) (c 
 
 // DialTimeout dials with timeout. net.Dialer doesn't have this method.
 func (d *Direct) Dial(network, address string) (c net.Conn, err error) {
-	ipVer := ipVersion(getAddressIP(address))
-	useIP := d.IP != nil
-	if useIP {
-		useIP = ipVer == 0 || ipVer == ipVersion(d.IP)
-		if !useIP {
-			err = errors.New("Dial: IP version mismatch")
+	var ipVer byte
+	ok := d.Interface == nil
+	if !ok {
+		ipVer := ipVersion(getAddressIP(address))
+		if d.IP != nil {
+			if ipVer == 0 || ipVer == ipVersion(d.IP) {
+				ok = true
+			} else {
+				err = errors.New("Dial: IP version mismatch")
+			}
 		}
 	}
-	if useIP || d.Interface == nil {
+	if ok {
 		// log.Printf("ip: %s", d.IP)
 		c, err = d.dial(network, address, d.IP)
 		if err == nil {
