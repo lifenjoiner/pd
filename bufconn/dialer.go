@@ -133,11 +133,11 @@ func (d *Direct) InterfaceOuterIPs() (ips []net.IP) {
 			continue
 		}
 		// Prefer temporary IPv6 for privacy. Is Global Unicast got earlier?
-		switch ipVersion(ip) {
-		case '6':
-			ipv6 = ip
-		case '4':
+		// Sometimes, IPv4 is IPv4-mapped IPv6!
+		if ip.To4() != nil {
 			ipv4 = ip
+		} else {
+			ipv6 = ip
 		}
 	}
 	if ipv6 != nil {
