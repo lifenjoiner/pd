@@ -52,12 +52,11 @@ func (s *Server) Serve(c *bufconn.Conn) {
 	defer func() { _ = c.Close() }()
 
 	data, err := c.Peek(1)
-
 	if err != nil {
 		log.Printf("[tcp] drop %v, error: %v", c.RemoteAddr(), err)
 		return
 	}
-	c.SetDeadline(time.Now().Add(c.Timeout))
+	_ = c.SetDeadline(time.Now().Add(c.Timeout))
 	switch data[0] {
 	case 5:
 		socks5 := (*socks5.Server)(s)

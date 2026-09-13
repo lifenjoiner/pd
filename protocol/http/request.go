@@ -89,7 +89,7 @@ func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart boo
 			return false, nil
 		}
 	} else {
-		cr.SetWriteDeadline(time.Now().Add(cr.Timeout))
+		_ = cr.SetWriteDeadline(time.Now().Add(cr.Timeout))
 		if seg {
 			err = r.writeRequest(cr, proxy)
 		} else {
