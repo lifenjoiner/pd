@@ -27,7 +27,7 @@ type Direct struct {
 }
 
 // BindConf is the bind interface config for dialer.
-var BindCfg = &BindConf{}
+var BindCfg *BindConf
 
 // NewDirect returns a Direct dialer.
 func NewBindConf(filter string) (b *BindConf, err error) {
@@ -176,12 +176,18 @@ func ipVersion(ip net.IP) byte {
 
 // DialTimeout dials the address with timeout.
 func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
-	d := &Direct{}
-	if !isLoopback(address) {
+	var (
+		c   net.Conn
+		err error
+	)
+	if BindCfg == nil || isLoopback(address) {
+		c, err = net.DialTimeout(network, address, timeout)
+	} else {
+		d := &Direct{}
 		d.Interface = BindCfg.Interface
 		d.IP = BindCfg.IP
+		c, err = d.DialTimeout(network, address, timeout)
 	}
-	c, err := d.DialTimeout(network, address, timeout)
 	var conn *Conn
 	if err == nil {
 		_ = c.SetDeadline(time.Now().Add(timeout))
