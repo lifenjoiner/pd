@@ -22,12 +22,12 @@ type Server server.Server
 func (s *Server) Serve(c *bufconn.Conn) bool {
 	logPre := "[socks5] " + c.RemoteAddr().String()
 
-	err := socks5.Authorize(c, c.R)
+	err := socks5.Authorize(c)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
 		return false
 	}
-	req, err := socks5.ParseRequest(c.R)
+	req, err := socks5.ParseRequest(c)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
 		return false

@@ -40,12 +40,7 @@ func (ck *TargetChecker) Transfer() (err error) {
 	if err != nil {
 		return
 	}
-	_, err = conn.R.ReadByte()
-	if err == nil {
-		_, err = conn.R.Discard(conn.R.Buffered())
-	} else {
-		err = errors.New("TargetChecker: no response")
-	}
+	_, err = conn.ReadAll()
 	return
 }
 

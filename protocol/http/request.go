@@ -11,10 +11,9 @@ import (
 	"io"
 	"net/textproto"
 	"net/url"
-	"time"
+	"strings"
 
 	"github.com/lifenjoiner/pd/bufconn"
-	"github.com/lifenjoiner/pd/forwarder"
 	"github.com/lifenjoiner/pd/protocol"
 )
 
@@ -58,59 +57,49 @@ func (r *Request) Port() string {
 	return protocol.GetPort(r.URL)
 }
 
-// GetRequest requests the ClientHello for sending to a remote server.
+// GetInnerRequest requests the ClientHello for sending to a remote server.
 // RCWN (Race Cache With Network) or ads blockers would abort dial-in without sendig ClientHello! Drop it.
-func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
+func (r *Request) GetInnerRequest(c *bufconn.Conn) (err error) {
 	if !r.Responsed {
-		_, err = w.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
+		_, err = c.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
 		r.Responsed = true
 		if err == nil {
-			err = r.cacheTLSData(rd)
+			r.TLSData, err = c.ReadAll()
 		}
 	}
 	return
 }
 
 // Request to a upstream server.
-func (r *Request) Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error) {
-	cr := fw.RightConn
+func (r *Request) Request(c *bufconn.Conn, proxy, seg bool) (err error) {
 	if r.Method == "CONNECT" {
 		if len(r.TLSData) > 0 {
 			if seg {
 				h := []byte(r.URL.Hostname())
 				i := bytes.Index(r.TLSData, h)
 				i += len(h) / 2
-				_, err = cr.SplitWrite(r.TLSData, i)
+				_, err = c.SplitWrite(r.TLSData, i)
 			} else {
-				_, err = cr.Write(r.TLSData)
+				_, err = c.Write(r.TLSData)
 			}
 		} else {
 			// drop it
-			return false, nil
+			return nil
 		}
 	} else {
-		_ = cr.SetWriteDeadline(time.Now().Add(cr.Timeout))
 		if seg {
-			err = r.writeRequest(cr, proxy)
+			err = r.writeRequest(c, proxy)
 		} else {
 			bw := &bytes.Buffer{}
 			err = r.writeRequest(bw, proxy)
 			if err == nil {
-				_, err = cr.Write(bw.Bytes())
+				_, err = c.Write(bw.Bytes())
 			}
 		}
 		if err == nil && len(r.PostData) > 0 {
-			_, err = cr.Write(r.PostData)
+			_, err = c.Write(r.PostData)
 		}
 	}
-	if err == nil {
-		restart, err = fw.Tunnel()
-	}
-	return
-}
-
-func (r *Request) cacheTLSData(rd *bufio.Reader) (err error) {
-	r.TLSData, err = bufconn.ReceiveData(rd)
 	return
 }
 
@@ -182,6 +171,17 @@ func ParseRequest(rd *bufio.Reader) (r *Request, err error) {
 	return
 }
 
+// parseStartLine parses "GET /foo HTTP/1.1" or "HTTP/1.1 200 OK" into its three parts.
+func parseStartLine(line string) (r1, r2, r3 string, ok bool) {
+	s1 := strings.Index(line, " ")
+	s2 := strings.Index(line[s1+1:], " ")
+	if s1 < 0 || s2 < 0 {
+		return
+	}
+	s2 += s1 + 1
+	return line[:s1], line[s1+1 : s2], line[s2+1:], true
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 // https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
 // Reuse "Connection", "Keep-Alive" and "Upgrade" (websocket).
@@ -197,4 +197,22 @@ func cleanHeaders(header textproto.MIMEHeader) {
 	for _, h := range hopByHopHeaders {
 		header.Del(h)
 	}
+}
+
+func writeStartLine(w io.Writer, s1, s2, s3 string) (err error) {
+	_, err = io.WriteString(w, s1+" "+s2+" "+s3+"\r\n")
+	return
+}
+
+func writeHeaders(w io.Writer, header textproto.MIMEHeader) (err error) {
+	for key, values := range header {
+		for _, v := range values {
+			_, err = io.WriteString(w, key+": "+v+"\r\n")
+			if err != nil {
+				return
+			}
+		}
+	}
+	_, err = io.WriteString(w, "\r\n")
+	return
 }

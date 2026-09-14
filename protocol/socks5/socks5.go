@@ -6,9 +6,7 @@
 package socks5
 
 import (
-	"bufio"
 	"errors"
-	"io"
 
 	"github.com/lifenjoiner/pd/bufconn"
 	"github.com/lifenjoiner/pd/protocol/socks"
@@ -35,9 +33,9 @@ const (
 )
 
 // Authorize a client permission to proceed.
-func Authorize(w io.Writer, rd *bufio.Reader) (err error) {
+func Authorize(c *bufconn.Conn) (err error) {
 	var p socks.Packet
-	p, err = bufconn.ReceiveData(rd)
+	p, err = c.ReadAll()
 	if err != nil {
 		return
 	}
@@ -45,6 +43,6 @@ func Authorize(w io.Writer, rd *bufio.Reader) (err error) {
 		return errors.New("not SOCKS5")
 	}
 	// NO AUTHENTICATION REQUIRED
-	_, err = w.Write([]byte{5, 0})
+	_, err = c.Write([]byte{5, 0})
 	return
 }

@@ -6,10 +6,7 @@
 package protocol
 
 import (
-	"bufio"
-	"io"
-
-	"github.com/lifenjoiner/pd/forwarder"
+	"github.com/lifenjoiner/pd/bufconn"
 )
 
 // Requester sends the proxied request to upstream servers.
@@ -19,6 +16,6 @@ type Requester interface {
 	Host() string
 	Hostname() string
 	Port() string
-	GetRequest(w io.Writer, r *bufio.Reader) error
-	Request(fw *forwarder.Forwarder, proxy, seg bool) (restart bool, err error)
+	GetInnerRequest(c *bufconn.Conn) error
+	Request(c *bufconn.Conn, proxy, seg bool) (err error)
 }

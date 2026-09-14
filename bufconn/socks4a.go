@@ -50,7 +50,7 @@ func (c *Socks4aConn) Bond(m, h, p string) error {
 	_, err = cc.Write(b)
 	if err == nil {
 		var b socks.Packet
-		b, err = ReceiveData(c.R)
+		b, err = cc.ReadAll()
 		if err == nil {
 			if b[1] == 0x5a {
 				return nil

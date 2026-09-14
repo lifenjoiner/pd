@@ -256,7 +256,7 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 	logPre := fmt.Sprintf("[%v] direct:%v/%v %v %v", d.ServerType, d.tried+1, d.maxTry, req.Command(), req.Host())
 	var leftTran forwarder.Transformer
 	if req.Command() == "CONNECT" {
-		err := req.GetRequest(client, client.R)
+		err := req.GetInnerRequest(client)
 		if err != nil {
 			log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
 			return true, err
@@ -272,16 +272,19 @@ func (d *Dispatcher) ServeDirect(req protocol.Requester) (bool, error) {
 		if d.maxTry > 1 && d.tried < 1 {
 			wave = 1.0
 		}
-		fw := &forwarder.Forwarder{
-			LeftAddr:  client.RemoteAddr(),
-			LeftConn:  client,
-			LeftTran:  leftTran,
-			RightAddr: c.RemoteAddr(),
-			RightConn: c,
-			Timeout:   d.Timeout,
-			Wave:      wave,
+		err = req.Request(c, false, d.tried == d.maxTry>>1)
+		if err == nil {
+			fw := &forwarder.Forwarder{
+				LeftAddr:  client.RemoteAddr(),
+				LeftConn:  client,
+				LeftTran:  leftTran,
+				RightAddr: c.RemoteAddr(),
+				RightConn: c,
+				Timeout:   d.Timeout,
+				Wave:      wave,
+			}
+			restart, err = fw.Tunnel()
 		}
-		restart, err = req.Request(fw, false, d.tried == d.maxTry>>1)
 		_ = c.Close()
 	} else if bufconn.IsDNSErr(err) {
 		// Trust the specified DNS.
@@ -311,7 +314,7 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 	client := d.Client
 	logPre := fmt.Sprintf("[%v] proxy:%v/%v %v %v", d.ServerType, d.proxyTried+1, d.maxProxyTry, req.Command(), req.Host())
 	if req.Command() == "CONNECT" {
-		err := req.GetRequest(client, client.R)
+		err := req.GetInnerRequest(client)
 		if err != nil {
 			log.Printf("%v <- %v <= TLS: no ClientHello, drop it.", logPre, client.RemoteAddr())
 			return true, err
@@ -324,15 +327,18 @@ func (d *Dispatcher) ServeProxied(req protocol.Requester) (bool, error) {
 		log.Printf("%v => %v <-> %v <-> %v", logPre, client.RemoteAddr(), c.LocalAddr(), p.URL.Host)
 		err = conn.Bond(req.Command(), req.Hostname(), req.Port())
 		if err == nil {
-			fw := &forwarder.Forwarder{
-				LeftAddr:  client.RemoteAddr(),
-				LeftConn:  client,
-				RightAddr: c.RemoteAddr(),
-				RightConn: c,
-				Timeout:   d.Timeout,
-				Wave:      1,
+			err = req.Request(c, true, false)
+			if err == nil {
+				fw := &forwarder.Forwarder{
+					LeftAddr:  client.RemoteAddr(),
+					LeftConn:  client,
+					RightAddr: c.RemoteAddr(),
+					RightConn: c,
+					Timeout:   d.Timeout,
+					Wave:      1,
+				}
+				restart, err = fw.Tunnel()
 			}
-			restart, err = req.Request(fw, true, false)
 		}
 		_ = c.Close()
 	}

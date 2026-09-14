@@ -5,13 +5,10 @@
 package socks5
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
-	"io"
 
 	"github.com/lifenjoiner/pd/bufconn"
-	"github.com/lifenjoiner/pd/forwarder"
 	"github.com/lifenjoiner/pd/protocol/socks"
 )
 
@@ -60,39 +57,35 @@ func (r *Request) Port() string {
 	return r.DestPort
 }
 
-// GetRequest requests the ClientHello for sending to a remote server.
+// GetInnerRequest requests the ClientHello for sending to a remote server.
 // RCWN (Race Cache With Network) or ads blockers would abort dial-in without sendig ClientHello! Drop it.
-func (r *Request) GetRequest(w io.Writer, rd *bufio.Reader) (err error) {
+func (r *Request) GetInnerRequest(c *bufconn.Conn) (err error) {
 	if !r.Responsed {
-		_, err = w.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0})
+		_, err = c.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0})
 		r.Responsed = true
 		if err == nil {
-			r.RequestData, err = bufconn.ReceiveData(rd)
+			r.RequestData, err = c.ReadAll()
 		}
 	}
 	return
 }
 
 // Request to a upstream server.
-func (r *Request) Request(fw *forwarder.Forwarder, _, seg bool) (restart bool, err error) {
-	cr := fw.RightConn
+func (r *Request) Request(c *bufconn.Conn, _, seg bool) (err error) {
 	if seg {
 		i := bytes.Index(r.RequestData, []byte(r.DestHost))
 		i += len(r.DestHost) / 2
-		_, err = cr.SplitWrite(r.RequestData, i)
+		_, err = c.SplitWrite(r.RequestData, i)
 	} else {
-		_, err = cr.Write(r.RequestData)
-	}
-	if err == nil {
-		restart, err = fw.Tunnel()
+		_, err = c.Write(r.RequestData)
 	}
 	return
 }
 
 // ParseRequest parses a request.
-func ParseRequest(rd *bufio.Reader) (req *Request, err error) {
+func ParseRequest(c *bufconn.Conn) (req *Request, err error) {
 	var p socks.Packet
-	p, err = bufconn.ReceiveData(rd)
+	p, err = c.ReadAll()
 	if err != nil {
 		return
 	}

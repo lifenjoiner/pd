@@ -17,12 +17,13 @@ import (
 type Socks5Conn Conn
 
 func (c *Socks5Conn) authorize() (err error) {
-	_, err = c.GetConn().Write([]byte{5, 1, 0})
+	cc := c.GetConn()
+	_, err = cc.Write([]byte{5, 1, 0})
 	if err != nil {
 		return
 	}
 	var p socks.Packet
-	p, err = ReceiveData(c.R)
+	p, err = cc.ReadAll()
 	if err == nil && p[1] != 0 {
 		err = errors.New("socks5: authorization failed")
 	}
@@ -63,7 +64,7 @@ func (c *Socks5Conn) Bond(m, h, p string) error {
 		_, err = cc.Write(b)
 		if err == nil {
 			var b socks.Packet
-			b, err = ReceiveData(c.R)
+			b, err = cc.ReadAll()
 			if err == nil {
 				if b[1] == 0 {
 					return nil

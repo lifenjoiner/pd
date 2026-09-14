@@ -22,7 +22,7 @@ type Server server.Server
 func (s *Server) Serve(c *bufconn.Conn) bool {
 	logPre := "[socks4a] " + c.RemoteAddr().String()
 
-	req, err := socks4a.ParseRequest(c.R)
+	req, err := socks4a.ParseRequest(c)
 	if err != nil {
 		log.Printf("%v <= %v", logPre, err)
 		return false
