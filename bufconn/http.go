@@ -33,30 +33,15 @@ func (c *HTTPConn) Bond(m, h, p string) error {
 	if len(b) == 0 {
 		return err
 	}
-	_, err = c.GetConn().Write(b)
+	cc := c.GetConn()
+	_, err = cc.Write(b)
 	if err == nil {
-		var line string
-		var ok, eoh bool
-		// cover fragmentations by http.Response.Write(). c has timeout.
-		wait := 3
-		for i := 0; i < wait+1; {
-			if !eoh || c.R.Buffered() > 0 {
-				line, err = c.R.ReadString('\n')
-				if i == 0 {
-					i++
-					ok = strings.Contains(line, " 200 ")
-				} else if err != nil {
-					i++
-				} else if !eoh {
-					eoh = line == "\r\n"
-				}
-			} else {
-				i++
-				time.Sleep(time.Millisecond)
+		b, err = cc.ReadAll()
+		if err == nil {
+			s := string(b)
+			if !strings.Contains(s, " 200 ") || strings.LastIndex(s, "\r\n\r\n") == -1 {
+				err = errors.New("http proxy server: not available")
 			}
-		}
-		if !ok {
-			err = errors.New("http proxy server: not available")
 		}
 	}
 	return err
